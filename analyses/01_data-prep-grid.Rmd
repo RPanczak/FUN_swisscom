@@ -58,10 +58,12 @@ mu <- Hmisc::markupSpecs$html
 
 ## Municipality boundaries 
 
-```{r}
+```{r eval=FALSE}
 st_gg21 <- st_read("data-raw/swisstopo/swissboundaries3d_2021-07_2056_5728/SHAPEFILE_LV95_LN02/swissBOUNDARIES3D_1_3_TLM_HOHEITSGEBIET.shp",
                    as_tibble = TRUE) %>% 
   st_zm(drop = TRUE, what = "ZM") %>% 
+  # move to LV03
+  st_transform(21781) %>%
   # filter(! BFS_NUMMER %in% c(2391, 5391, 5394)) %>% 
   # exclude lakes
   # filter(OBJEKTART != "Kantonsgebiet") %>% 
@@ -72,6 +74,12 @@ st_gg21 <- st_read("data-raw/swisstopo/swissboundaries3d_2021-07_2056_5728/SHAPE
          GMDNAME = NAME,
          KTNR = KANTONSNUM) %>% 
   arrange(GMDNR)
+
+write_rds(st_gg21, "data/swisstopo/st_gg21.Rds")
+```
+
+```{r}
+st_gg21 <- read_rds("data/swisstopo/st_gg21.Rds")
 ```
 
 ```{r eval=FALSE, include=FALSE}
@@ -81,7 +89,7 @@ st_cities_1 <- st_gg21 %>%
 st_cities_2 <- st_gg21 %>% 
   filter(GMDNR %in% c(230, 1061, 3203, 5192, 371))
 
-# st_cities %>% 
+# st_cities_1 %>% 
 #   st_geometry() %>% 
 #   plot()
 ```
@@ -90,17 +98,20 @@ st_cities_2 <- st_gg21 %>%
 
 Could be used to define `offset` for `st_make_grid`
 
-```{r}
+```{r eval=FALSE}
 statpop_20 <- read_delim("data-raw/BfS/ag-b-00.03-vz2020statpop/STATPOP2020.zip", 
                          delim = ";", escape_double = FALSE, trim_ws = TRUE)[] %>% 
   mutate_all(as.integer)
 
-offset <- statpop_20 %>% 
-  summarise(minX = min(E_KOORD),
-            minY = min(N_KOORD))
-
 # statpop_20 %>% slice(1:10) %>% View()
-rm(statpop_20); gc()
+
+write_rds(statpop_20, "data/BfS/statpop_20.Rds")
+```
+
+```{r}
+offset <- read_rds("data/BfS/statpop_20.Rds") %>% 
+  summarise(minX = min(X_KOORD),
+            minY = min(Y_KOORD))
 ```
 
 <!-- ----------------------------------------------------- -->
@@ -109,13 +120,11 @@ rm(statpop_20); gc()
 
 ## Generate whole country
 
-100 m grid, with lower left corner defined using `STATPOP` cells and clipped using swisstopo municipality data.  
+100 m grid, with lower left corner defined using `STATPOP` cells.  
 
-Also, adding ID for each cell (based on row number) and area. 
+Also, adding ID for each cell (based on row number).   
 
-FIXME: crashing R and unable to complete
-
-```{r eval=FALSE, include=FALSE}
+```{r}
 country <- st_gg21 %>% 
   st_make_grid(cellsize = 100, 
                offset = c(offset$minX, offset$minY),
@@ -125,14 +134,15 @@ country <- st_gg21 %>%
   mutate(ID1 = row_number()) %>% 
   relocate(ID1)
 
-bern <- country %>% 
-  st_intersection(st_gg21 %>% filter(GMDNR == 351))  %>%
-  mutate(ID2 = row_number(),
-         area = st_area(.)) %>% 
-  relocate(ID1, ID2, area)
+# st_write(country, "data/grid/country.gpkg")
+write_rds(country, "data/grid/country.Rds")
 ```
 
 ## Generate cities
+
+Clipped using swisstopo municipality data.  
+
+Added second city specific ID and area. 
 
 ### Zuirich
 
@@ -232,6 +242,18 @@ bern <- area_filter %>%
   relocate(ID, area)
 
 rm(area_filter); gc()
+```
+
+```{r}
+bern <- country %>% 
+  st_intersection(st_gg21 %>% filter(GMDNR == 351))  %>%
+  mutate(ID2 = row_number(),
+         area = st_area(.)) %>% 
+  relocate(ID1, ID2, area)
+
+city_grid <- function(GMDNR){
+  
+}
 ```
 
 ```{r eval=FALSE}
