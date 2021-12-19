@@ -253,7 +253,16 @@ bern <- country %>%
 
 city_grid <- function(GMDNR){
   
+  city <- country %>% 
+    st_intersection(st_gg21 %>% filter(GMDNR == GMDNR))  %>%
+    mutate(ID2 = row_number(),
+           area = st_area(.)) %>% 
+    relocate(ID1, ID2, area)
+  
+  return(city)
 }
+
+bern <- city_grid(351)
 ```
 
 ```{r eval=FALSE}
