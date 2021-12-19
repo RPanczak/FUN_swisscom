@@ -54,16 +54,11 @@ mu <- Hmisc::markupSpecs$html
 
 <!-- ----------------------------------------------------- -->
 
-# Ancillary 
+# Ancillary data
 
-## Geo 
+## Municipality boundaries 
 
 ```{r}
-bfs_gg21 <- st_read("data-raw/BfS/ag-b-00.03-875-gg21/ggg_2021-LV95/shp/g1g21_01072021.shp",
-                    as_tibble = TRUE) %>% 
-  # filter(! GMDNR %in% c(2391, 5391, 5394)) %>% 
-  st_set_crs(2056)
-
 st_gg21 <- st_read("data-raw/swisstopo/swissboundaries3d_2021-07_2056_5728/SHAPEFILE_LV95_LN02/swissBOUNDARIES3D_1_3_TLM_HOHEITSGEBIET.shp",
                    as_tibble = TRUE) %>% 
   st_zm(drop = TRUE, what = "ZM") %>% 
@@ -72,18 +67,23 @@ st_gg21 <- st_read("data-raw/swisstopo/swissboundaries3d_2021-07_2056_5728/SHAPE
   # filter(OBJEKTART != "Kantonsgebiet") %>% 
   # exclude FL & enclaves
   filter(ICC == "CH") %>% 
-  select(BFS_NUMMER, NAME, BEZIRKSNUM, KANTONSNUM, GEM_TEIL) %>% 
+  select(BFS_NUMMER, NAME, KANTONSNUM, GEM_TEIL) %>% 
   rename(GMDNR = BFS_NUMMER,
          GMDNAME = NAME,
-         BZNR = BEZIRKSNUM,
          KTNR = KANTONSNUM) %>% 
   arrange(GMDNR)
+```
 
-zurich
-geneva
-basel 
-lausanne
-bern
+```{r eval=FALSE, include=FALSE}
+st_cities_1 <- st_gg21 %>% 
+  filter(GMDNR %in% c(261, 6621, 2701, 5586, 351))
+
+st_cities_2 <- st_gg21 %>% 
+  filter(GMDNR %in% c(230, 1061, 3203, 5192, 371))
+
+# st_cities %>% 
+#   st_geometry() %>% 
+#   plot()
 ```
 
 ## STATPOP
@@ -100,38 +100,143 @@ offset <- statpop_20 %>%
             minY = min(N_KOORD))
 
 # statpop_20 %>% slice(1:10) %>% View()
+rm(statpop_20); gc()
 ```
 
 <!-- ----------------------------------------------------- -->
 
 # Grid
 
-## Generate 
+## Generate whole country
 
 100 m grid, with lower left corner defined using `STATPOP` cells and clipped using swisstopo municipality data.  
 
 Also, adding ID for each cell (based on row number) and area. 
 
+FIXME: crashing R and unable to complete
+
 ```{r eval=FALSE, include=FALSE}
-grid_100m <- st_gg21 %>% 
-  filter(GMDNR == 351) %>% 
-  st_make_grid(cellsize = 100, square = TRUE, 
-               offset = c(offset$minX, offset$minY)) %>% 
+country <- st_gg21 %>% 
+  st_make_grid(cellsize = 100, 
+               offset = c(offset$minX, offset$minY),
+               square = TRUE) %>% 
   st_sf() %>%
+  st_cast("POLYGON") %>% 
   mutate(ID1 = row_number()) %>% 
   relocate(ID1)
 
-grid_100m_crop <- grid_100m %>% 
-  st_intersection(st_gg21 %>% 
-                    filter(GMDNR == 351))  %>%
+bern <- country %>% 
+  st_intersection(st_gg21 %>% filter(GMDNR == 351))  %>%
   mutate(ID2 = row_number(),
          area = st_area(.)) %>% 
   relocate(ID1, ID2, area)
 ```
 
-```{r include=FALSE}
-st_write(grid_100m, "data/grid/grid_100m.gpkg")
-st_write(grid_100m_crop, "data/grid/grid_100m_crop.gpkg")
+## Generate cities
+
+### Zuirich
+
+```{r}
+area_filter <- st_gg21 %>% 
+  filter(GMDNR == 261)
+
+zurich <- area_filter %>% 
+  st_make_grid(cellsize = 100, 
+               # offset = c(offset$minX, offset$minY), 
+               square = TRUE) %>% 
+  st_sf() %>% 
+  st_cast("POLYGON") %>% 
+  st_intersection(area_filter)  %>%
+  mutate(ID = row_number(),
+         area = st_area(.)) %>% 
+  relocate(ID, area)
+
+rm(area_filter); gc()
+```
+
+### Geneva
+
+```{r}
+area_filter <- st_gg21 %>% 
+  filter(GMDNR == 6621)
+
+geneva <- area_filter %>% 
+  st_make_grid(cellsize = 100, 
+               # offset = c(offset$minX, offset$minY), 
+               square = TRUE) %>% 
+  st_sf() %>% 
+  st_cast("POLYGON") %>% 
+  st_intersection(area_filter)  %>%
+  mutate(ID = row_number(),
+         area = st_area(.)) %>% 
+  relocate(ID, area)
+
+rm(area_filter); gc()
+```
+
+### Basel
+
+```{r}
+area_filter <- st_gg21 %>% 
+  filter(GMDNR == 2701)
+
+basel <- area_filter %>% 
+  st_make_grid(cellsize = 100, 
+               # offset = c(offset$minX, offset$minY), 
+               square = TRUE) %>% 
+  st_sf() %>% 
+  st_cast("POLYGON") %>% 
+  st_intersection(area_filter)  %>%
+  mutate(ID = row_number(),
+         area = st_area(.)) %>% 
+  relocate(ID, area)
+
+rm(area_filter); gc()
+```
+
+### Lausanne
+
+```{r}
+area_filter <- st_gg21 %>% 
+  filter(GMDNR == 5586)
+
+lausanne <- area_filter %>% 
+  st_make_grid(cellsize = 100, 
+               # offset = c(offset$minX, offset$minY), 
+               square = TRUE) %>% 
+  st_sf() %>% 
+  st_cast("POLYGON") %>% 
+  st_intersection(area_filter)  %>%
+  mutate(ID = row_number(),
+         area = st_area(.)) %>% 
+  relocate(ID, area)
+
+rm(area_filter); gc()
+```
+
+### Bern 
+
+```{r}
+area_filter <- st_gg21 %>% 
+  filter(GMDNR == 351)
+
+bern <- area_filter %>% 
+  st_make_grid(cellsize = 100, 
+               # offset = c(offset$minX, offset$minY), 
+               square = TRUE) %>% 
+  st_sf() %>% 
+  st_cast("POLYGON") %>% 
+  st_intersection(area_filter)  %>%
+  mutate(ID = row_number(),
+         area = st_area(.)) %>% 
+  relocate(ID, area)
+
+rm(area_filter); gc()
+```
+
+```{r eval=FALSE}
+st_write(bern, "data/grid/bern.gpkg")
+write_rds(bern, "data/grid/bern.Rds")
 ```
 
 ## Example 
@@ -139,28 +244,39 @@ st_write(grid_100m_crop, "data/grid/grid_100m_crop.gpkg")
 Municipality Bern coverage:  
 
 ```{r}
-bern <- st_join(grid_100m,
-                st_gg21 %>% filter(GMDNR == 351),
-                left = FALSE) %>% 
+bern %>% 
   st_geometry() %>% 
   plot()
 ```
 
 ```{r}
-grid_100m_crop %>% 
+bern %>% 
   st_geometry() %>% 
-  plot()
+  qtm(borders = "red", fill = NULL)
 ```
 
-There are few examples of grid cells with very small area. These could be excluded if no population was found there?
+There are few examples of grid cells with very small area.  
+These could be excluded if no population was found there?
 
 ```{r}
-grid_1km_crop %>% 
-  st_join(grid_1km_crop %>% 
-            arrange(area) %>% 
-            slice(2),
-          join = st_touches, left = FALSE) %>% 
-  st_geometry() %>% 
-  qtm()
+bern %>% 
+  st_drop_geometry() %>% 
+  arrange(area) %>% 
+  slice(1:10)
+```
+
+<!-- ----------------------------------------------------- -->
+
+# Area estimates
+
+```{r}
+nrow(bern)
+
+
+nrow(zurich) +
+  nrow(geneva) +
+  nrow(basel) +
+  nrow(lausanne) +
+  nrow(bern)
 ```
 
