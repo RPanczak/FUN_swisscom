@@ -255,35 +255,70 @@ bern %>%
 
 # Area estimates
 
+## Bern 
+
 Number of tiles for area of Bern  
 
 ```{r}
-nrow(bern)
+tiles <- nrow(bern)
 ```
 
-Number of requests needed
+Number of requests needed  
 
 ```{r}
-(requests <- ceiling(nrow(bern) / 100))
+requests <- ceiling(tiles / 100)
 ```
 
-Price for complete grid
+Price for complete grid  
 
 ```{r}
-(price <- requests * 0.01)
+price <- requests * 0.01
 ```
 
-Price for 24h
+Price for 24h  
 
 ```{r}
-(price24 <- price * 24)
+price_24h <- price * 24
 ```
 
+Price for 4w  
+
 ```{r}
-nrow(zurich) +
+price_4w <- price_24h * 7 * 4
+```
+
+## 5 cities 
+
+Number of tiles for area of Bern  
+
+```{r}
+tiles <- nrow(zurich) +
   nrow(geneva) +
   nrow(basel) +
   nrow(lausanne) +
   nrow(bern)
 ```
 
+Number of requests needed  
+
+```{r}
+requests <- ceiling(tiles / 100)
+```
+
+Price for complete grid  
+
+```{r}
+price <- requests * 0.01
+```
+
+Price for 24h  
+
+```{r}
+price_24h <- price * 24
+```
+
+Price for 4w  
+
+```{r}
+price_4w <- price_24h * 7 * 4
+```
