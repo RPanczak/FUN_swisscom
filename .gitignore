@@ -44,4 +44,4 @@ secrets/swisscom.txt
 
 # too big
 data/grid/country.Rds
-data/BfS/statpop_20.Rd
+data/BfS/statpop_20.Rds
