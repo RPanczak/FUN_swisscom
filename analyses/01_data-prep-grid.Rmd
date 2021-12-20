@@ -124,7 +124,7 @@ offset <- read_rds("data/BfS/statpop_20.Rds") %>%
 
 Also, adding ID for each cell (based on row number).   
 
-```{r}
+```{r eval=FALSE}
 country <- st_gg21 %>% 
   st_make_grid(cellsize = 100, 
                offset = c(offset$minX, offset$minY),
@@ -138,6 +138,10 @@ country <- st_gg21 %>%
 write_rds(country, "data/grid/country.Rds")
 ```
 
+```{r}
+country <- read_rds("data/grid/country.Rds")
+```
+
 ## Generate cities
 
 Clipped using swisstopo municipality data.  
@@ -147,102 +151,44 @@ Added second city specific ID and area.
 ### Zuirich
 
 ```{r}
-area_filter <- st_gg21 %>% 
-  filter(GMDNR == 261)
-
-zurich <- area_filter %>% 
-  st_make_grid(cellsize = 100, 
-               # offset = c(offset$minX, offset$minY), 
-               square = TRUE) %>% 
-  st_sf() %>% 
-  st_cast("POLYGON") %>% 
-  st_intersection(area_filter)  %>%
-  mutate(ID = row_number(),
+zurich <- country %>% 
+  st_intersection(st_gg21 %>% filter(GMDNR == 261))  %>%
+  mutate(ID2 = row_number(),
          area = st_area(.)) %>% 
-  relocate(ID, area)
-
-rm(area_filter); gc()
+  relocate(ID1, ID2, area)
 ```
 
 ### Geneva
 
 ```{r}
-area_filter <- st_gg21 %>% 
-  filter(GMDNR == 6621)
-
-geneva <- area_filter %>% 
-  st_make_grid(cellsize = 100, 
-               # offset = c(offset$minX, offset$minY), 
-               square = TRUE) %>% 
-  st_sf() %>% 
-  st_cast("POLYGON") %>% 
-  st_intersection(area_filter)  %>%
-  mutate(ID = row_number(),
+geneva <- country %>% 
+  st_intersection(st_gg21 %>% filter(GMDNR == 6621))  %>%
+  mutate(ID2 = row_number(),
          area = st_area(.)) %>% 
-  relocate(ID, area)
-
-rm(area_filter); gc()
+  relocate(ID1, ID2, area)
 ```
 
 ### Basel
 
 ```{r}
-area_filter <- st_gg21 %>% 
-  filter(GMDNR == 2701)
-
-basel <- area_filter %>% 
-  st_make_grid(cellsize = 100, 
-               # offset = c(offset$minX, offset$minY), 
-               square = TRUE) %>% 
-  st_sf() %>% 
-  st_cast("POLYGON") %>% 
-  st_intersection(area_filter)  %>%
-  mutate(ID = row_number(),
+basel <- country %>% 
+  st_intersection(st_gg21 %>% filter(GMDNR == 2701))  %>%
+  mutate(ID2 = row_number(),
          area = st_area(.)) %>% 
-  relocate(ID, area)
-
-rm(area_filter); gc()
+  relocate(ID1, ID2, area)
 ```
 
 ### Lausanne
 
 ```{r}
-area_filter <- st_gg21 %>% 
-  filter(GMDNR == 5586)
-
-lausanne <- area_filter %>% 
-  st_make_grid(cellsize = 100, 
-               # offset = c(offset$minX, offset$minY), 
-               square = TRUE) %>% 
-  st_sf() %>% 
-  st_cast("POLYGON") %>% 
-  st_intersection(area_filter)  %>%
-  mutate(ID = row_number(),
+lausanne <- country %>% 
+  st_intersection(st_gg21 %>% filter(GMDNR == 5586))  %>%
+  mutate(ID2 = row_number(),
          area = st_area(.)) %>% 
-  relocate(ID, area)
-
-rm(area_filter); gc()
+  relocate(ID1, ID2, area)
 ```
 
 ### Bern 
-
-```{r}
-area_filter <- st_gg21 %>% 
-  filter(GMDNR == 351)
-
-bern <- area_filter %>% 
-  st_make_grid(cellsize = 100, 
-               # offset = c(offset$minX, offset$minY), 
-               square = TRUE) %>% 
-  st_sf() %>% 
-  st_cast("POLYGON") %>% 
-  st_intersection(area_filter)  %>%
-  mutate(ID = row_number(),
-         area = st_area(.)) %>% 
-  relocate(ID, area)
-
-rm(area_filter); gc()
-```
 
 ```{r}
 bern <- country %>% 
@@ -250,7 +196,9 @@ bern <- country %>%
   mutate(ID2 = row_number(),
          area = st_area(.)) %>% 
   relocate(ID1, ID2, area)
+```
 
+```{r eval=FALSE, include=FALSE}
 city_grid <- function(GMDNR){
   
   city <- country %>% 
@@ -262,11 +210,18 @@ city_grid <- function(GMDNR){
   return(city)
 }
 
-bern <- city_grid(351)
+start_time <- Sys.time()
+
+bern2 <- city_grid(351)
+
+end_time <- Sys.time()
+end_time - start_time
+
+identical(bern, bern2)
 ```
 
-```{r eval=FALSE}
-st_write(bern, "data/grid/bern.gpkg")
+```{r}
+# st_write(bern, "data/grid/bern.gpkg")
 write_rds(bern, "data/grid/bern.Rds")
 ```
 
@@ -274,7 +229,7 @@ write_rds(bern, "data/grid/bern.Rds")
 
 Municipality Bern coverage:  
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 bern %>% 
   st_geometry() %>% 
   plot()
@@ -300,10 +255,31 @@ bern %>%
 
 # Area estimates
 
+Number of tiles for area of Bern  
+
 ```{r}
 nrow(bern)
+```
 
+Number of requests needed
 
+```{r}
+(requests <- ceiling(nrow(bern) / 100))
+```
+
+Price for complete grid
+
+```{r}
+(price <- requests * 0.01)
+```
+
+Price for 24h
+
+```{r}
+(price24 <- price * 24)
+```
+
+```{r}
 nrow(zurich) +
   nrow(geneva) +
   nrow(basel) +
