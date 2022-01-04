@@ -1,6 +1,6 @@
 # FUN_swisscom
 
-Swisscom Mobility Insights - eda of publicly available data
+:switzerland: Swisscom Mobility Insights - eda of publicly available data
 
 [![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
 
