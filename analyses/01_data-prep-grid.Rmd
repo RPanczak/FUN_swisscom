@@ -144,14 +144,36 @@ country <- read_rds("data/grid/country.Rds")
 
 ## Generate cities
 
-Clipped using swisstopo municipality data.  
+Clipped / selected using swisstopo municipality data.  
 
 Added second, city specific ID and area. 
 
-### Function
+```{r eval=FALSE, include=FALSE}
+# tests
+
+bern_clip <- country %>%
+  st_intersection(st_gg21 %>% filter(GMDNR == 351))  %>%
+  mutate(ID2 = row_number(),
+         area = st_area(.)) %>%
+  relocate(ID1, ID2, area)
+
+bern <- country %>% 
+  filter(st_intersects(geometry, 
+                       st_gg21 %>% filter(GMDNR == 351), 
+                       sparse = FALSE)) %>%
+  mutate(ID2 = row_number()) %>%
+  relocate(ID1, ID2)
+
+bern <- country[st_gg21 %>% filter(GMDNR == 351), ]
+```
+
+### Function with clipping 
 
 ```{r}
-city_grid <- function(municipality){
+# why st_intersection 
+# https://stackoverflow.com/questions/62442150/why-use-st-intersection-rather-than-st-intersects
+
+city_grid_clip <- function(municipality){
   
   city <- country %>% 
     st_intersection(st_gg21 %>% 
@@ -164,46 +186,77 @@ city_grid <- function(municipality){
 }
 ```
 
+### Function without clipping 
+
+```{r}
+# solution from
+# https://stackoverflow.com/questions/57014381/how-to-filter-an-r-simple-features-collection-using-sf-methods-like-st-intersect
+
+city_grid <- function(municipality){
+  
+  city <- country %>% 
+    filter(st_intersects(geometry, 
+                         st_gg21 %>% filter(GMDNR == municipality), 
+                         sparse = FALSE)) %>%
+    mutate(ID2 = row_number()) %>% 
+    relocate(ID1, ID2)
+  
+  return(city)
+}
+```
+
+```{r}
+# or even simpler, without dplyr
+# could be generalized with arguments to provide full grid and GMDE shape
+
+city_grid <- function(municipality){
+  
+  city <- country[st_gg21 %>% filter(GMDNR == municipality), ] %>%
+    mutate(ID2 = row_number()) %>% 
+    relocate(ID1, ID2)
+  return(city)
+  
+}
+```
+
 ### Zuirich
 
 ```{r}
-zurich_clip <- city_grid(261)
+# zurich_clip <- city_grid_clip(261)
+zurich <- city_grid(261)
 ```
 
 ### Geneva
 
 ```{r}
-geneva_clip <- city_grid(6621)
+# geneva_clip <- city_grid_clip(6621)
+geneva <- city_grid(6621)
 ```
 
 ### Basel
 
 ```{r}
-basel_clip <- city_grid(2701)
+# basel_clip <- city_grid_clip(2701)
+basel <- city_grid(2701)
 ```
 
 ### Lausanne
 
 ```{r}
-lausanne_clip <- city_grid(5586)
+# lausanne_clip <- city_grid_clip(5586)
+lausanne <- city_grid(5586)
 ```
 
 ### Bern 
 
 ```{r}
-# bern_clip <- country %>% 
-#   st_intersection(st_gg21 %>% filter(GMDNR == 351))  %>%
-#   mutate(ID2 = row_number(),
-#          area = st_area(.)) %>% 
-#   relocate(ID1, ID2, area)
-
-bern_clip <- city_grid(351)
-
-identical(bern, bern2)
+bern_clip <- city_grid_clip(351)
+bern <- city_grid(351)
 ```
 
 ```{r}
-# st_write(bern, "data/grid/bern.gpkg")
+# st_write(bern_clip, "data/grid/bern_clip.gpkg")
+write_rds(bern_clip, "data/grid/bern_clip.Rds")
 write_rds(bern, "data/grid/bern.Rds")
 ```
 
@@ -212,10 +265,24 @@ write_rds(bern, "data/grid/bern.Rds")
 Municipality Bern coverage:  
 
 ```{r eval=FALSE, include=FALSE}
+bern_clip %>% 
+  st_geometry() %>% 
+  plot()
+
 bern %>% 
   st_geometry() %>% 
   plot()
 ```
+
+Clipped grid:  
+
+```{r}
+bern_clip %>% 
+  st_geometry() %>% 
+  qtm(borders = "red", fill = NULL)
+```
+
+Vs. unclipped one:  
 
 ```{r}
 bern %>% 
@@ -227,7 +294,7 @@ There are few examples of grid cells with very small area.
 These could be excluded if no population was found there?
 
 ```{r}
-bern %>% 
+bern_clip %>% 
   st_drop_geometry() %>% 
   arrange(area) %>% 
   slice(1:10)
