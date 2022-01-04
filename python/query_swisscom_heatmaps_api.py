@@ -10,6 +10,7 @@ from requests_oauthlib import OAuth2Session
 from datetime import datetime, timedelta
 import pprint
 
+import json
 
 BASE_URL = "https://api.swisscom.com/layer/heatmaps/demo"
 TOKEN_URL = "https://consent.swisscom.com/o/oauth2/token"
@@ -21,11 +22,11 @@ headers = {"scs-version": "2"}  # API version
 keys_file = open("secrets/swisscom.txt")
 lines = keys_file.readlines()
 
-# heatmaps
+# heatmaps specific
 client_id = lines[2].rstrip()
 client_secret = lines[4].rstrip()
 
-# dwell time
+# dwell time specific
 # client_id = lines[7].rstrip()
 # client_secret = lines[9].rstrip()
 
@@ -33,7 +34,8 @@ client_secret = lines[4].rstrip()
 # Fetch an access token
 client = BackendApplicationClient(client_id = client_id)
 oauth = OAuth2Session(client = client)
-oauth.fetch_token(token_url = TOKEN_URL, client_id = client_id, client_secret = client_secret)
+oauth.fetch_token(token_url = TOKEN_URL, 
+                  client_id = client_id, client_secret = client_secret)
 
 
 # Get all the first MAX_NB_TILES_REQUEST tile ids associated with the postal code of interest
@@ -46,10 +48,15 @@ muni_tiles_json = oauth.get(
 ).json()
 
 type(muni_tiles_json)
+type(muni_tiles_json["tiles"])
 len(muni_tiles_json["tiles"])
 
 muni_tiles_json.items()
 muni_tiles_json["tiles"][1]
+
+# save grid to json
+with open('data/swisscom/chansy_grid.json', 'w', encoding = 'utf-8') as f:
+    json.dump(muni_tiles_json, f, ensure_ascii = False, indent = 4) 
 
 tile_ids = [t["tileId"] for t in muni_tiles_json["tiles"]][
     :MAX_NB_TILES_REQUEST
