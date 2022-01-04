@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Dec 20 22:25:05 2021
+Accessing  http://digital.swisscom.com API platform
 
-@author: panczak
+Example derived from https://github.com/swisscom/mip/blob/master/query_postal_codes_heatmaps_api.py
 """
 
 import random
 import statistics
 from collections import defaultdict
-from datetime import datetime, timedelta, date
+from datetime import timedelta, date
 
 import matplotlib.pyplot as plt
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
+
+# credentials
+keys_file = open("secrets/swisscom.txt")
+lines = keys_file.readlines()
 
 
 def compute_density_baseline(tile_ids: list,
@@ -90,9 +94,11 @@ if __name__ == "__main__":
     TOKEN_URL = "https://consent.swisscom.com/o/oauth2/token"
     MAX_NB_TILES_REQUEST = 100
     headers = {"scs-version": "2"}  # API version
-    client_id = "" # customer key in the Swisscom digital market place
-    client_secret = "" # customer secret in the Swisscom digital market place
-
+    
+    # Credentials
+    client_id = lines[2].rstrip()
+    client_secret = lines[4].rstrip()
+    
     assert client_id, "client id not defined"
     assert client_secret, "client_secret not defined"
     # Fetch an access token
