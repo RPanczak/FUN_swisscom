@@ -1,0 +1,84 @@
+---
+title: "Analyses of swisscom data"
+subtitle: "API data"
+author: "Radek Panczak"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::robobook:
+    code_folding: show
+    self_contained: true
+    highlight: pygments
+editor_options: 
+  chunk_output_type: console
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "../docs") })
+---
+
+<!-- ----------------------------------------------------- -->
+
+```{r setup, include = FALSE}
+set.seed(12345)
+options(scipen = 999)
+options(max.print = "75")
+
+library(pacman)
+p_load(tidyverse, magrittr, scales,  
+       # DT, 
+       sf, tmap)
+
+tmap_mode("view")
+
+# import::from("sjmisc", "frq")
+```
+
+```{r conflicts, include = FALSE}
+tidyverse::tidyverse_conflicts()
+
+conflicted::conflict_scout()
+```
+
+```{r knit-setup, include = FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+
+knitr::opts_chunk$set(cache = FALSE,
+                      prompt = FALSE,
+                      tidy = FALSE,
+                      comment = NA,
+                      message = FALSE,
+                      warning = FALSE)
+
+knitr::opts_knit$set(width = 75)
+
+mu <- Hmisc::markupSpecs$html
+```
+
+<!-- ----------------------------------------------------- -->
+
+# Ancillary data
+
+## Municipality boundaries 
+
+```{r}
+st_gg21 <- read_rds("data/swisstopo/st_gg21.Rds")
+```
+
+<!-- ----------------------------------------------------- -->
+
+# Source 
+
+Data is from http://mip.swisscom.ch which swisscom describes as: 
+
+> Our new API platform offering 3 endpoints focusing on *density*, *dwell times* and *origin destination*
+
+Free data is limited to **2020-01-27** only!  
+
+## Heatmaps 
+
+Daily dwell demographics
+Get estimated demographics data per tile for a period of one day.
+
+Daily dwell density
+Get the estimated density of people per tile for a period of one day.
+
+Daily unique counts
+Get the estimated number of unique individuals per tile for a period of one day.
