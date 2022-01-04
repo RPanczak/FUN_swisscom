@@ -41,6 +41,7 @@ vignettes/*.pdf
 # folders
 data-raw/
 secrets/swisscom.txt
+admin/
 
 # too big
 data/grid/country.Rds
