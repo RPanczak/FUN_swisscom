@@ -79,7 +79,7 @@ st_gg21 <- st_read("data-raw/swisstopo/swissboundaries3d_2021-07_2056_5728/SHAPE
 write_rds(st_gg21, "data/swisstopo/st_gg21.Rds")
 ```
 
-```{r}
+```{r echo=FALSE}
 st_gg21 <- read_rds("data/swisstopo/st_gg21.Rds")
 ```
 
@@ -123,10 +123,10 @@ offset_bfs <- read_rds("data/BfS/statpop_20.Rds") %>%
 Using two communities that are furthest away in southerly and westerly directions:  
 
 **Chansy** to define `x`  
-- Postal code `1284`
-- SFOS number	`6611`
+- Postal code `1284`  
+- SFOS number	`6611`  
 
-```{r}
+```{r echo=FALSE}
 st_gg21 %>% 
   filter(GMDNR %in% c(6611)) %>% 
   st_geometry() %>% 
@@ -134,10 +134,10 @@ st_gg21 %>%
 ```
 
 **Chiasso** to define `y`  
-- Postal code `6830`
-- SFOS number	`5250`
+- Postal code `6830`  
+- SFOS number	`5250`  
 
-```{r}
+```{r echo=FALSE}
 st_gg21 %>% 
   filter(GMDNR %in% c(5250)) %>% 
   st_geometry() %>% 
@@ -155,10 +155,6 @@ chansy_grid <- fromJSON("data/swisscom/chansy_grid.json")
 chansy_grid <- flatten(chansy_grid$tiles) %>% 
   as_tibble()
 
-chiasso_grid <- fromJSON("data/swisscom/chiasso_grid.json")
-chiasso_grid <- flatten(chiasso_grid$tiles) %>% 
-  as_tibble()
-
 chansy_grid_sf <- chansy_grid %>% 
   st_as_sf(coords = c("ll.x", "ll.y"), 
            crs = 4326,
@@ -166,6 +162,12 @@ chansy_grid_sf <- chansy_grid %>%
   st_transform(21781) %>% 
   mutate(x = st_coordinates(.)[, 1],
          y = st_coordinates(.)[, 2])
+```
+
+```{r}
+chiasso_grid <- fromJSON("data/swisscom/chiasso_grid.json")
+chiasso_grid <- flatten(chiasso_grid$tiles) %>% 
+  as_tibble()
 
 chiasso_grid_sf <- chiasso_grid %>% 
   st_as_sf(coords = c("ll.x", "ll.y"), 
@@ -178,12 +180,12 @@ chiasso_grid_sf <- chiasso_grid %>%
 
 Example of grid  
 
-```{r}
+```{r echo=FALSE}
 qtm(chansy_grid_sf)
 # qtm(chiasso_grid_sf)
 ```
 
-Coordinates of lower left corner were then obtained by geting minimum values  
+Coordinates of lower left corner were then obtained by getting minimum values  
 
 ```{r}
 offset_swisscom <- 
@@ -210,7 +212,7 @@ offset_swisscom <-
 
 Note small difference from BfS derived minimums (in black)!  
 
-```{r}
+```{r echo=FALSE}
 tm_shape(offset_bfs) +
     tm_dots(col = "black") +
 tm_shape(offset_swisscom) +
@@ -246,7 +248,7 @@ country <- st_gg21 %>%
 write_rds(country, "data/grid/country.Rds")
 ```
 
-```{r}
+```{r echo=FALSE}
 country <- read_rds("data/grid/country.Rds")
 ```
 
@@ -371,7 +373,7 @@ bern_clip <- city_grid_clip(351)
 bern <- city_grid(351)
 ```
 
-```{r}
+```{r echo=FALSE}
 # st_write(bern_clip, "data/grid/bern_clip.gpkg")
 # st_write(bern, "data/grid/bern.gpkg")
 write_rds(bern_clip, "data/grid/bern_clip.Rds")
@@ -426,7 +428,7 @@ bern %>%
 
 Clipped grid:  
 
-```{r}
+```{r echo=FALSE}
 bern_clip %>% 
   st_geometry() %>% 
   qtm(borders = "red", fill = NULL)
@@ -434,7 +436,7 @@ bern_clip %>%
 
 Vs. unclipped one:  
 
-```{r}
+```{r echo=FALSE}
 bern %>% 
   st_geometry() %>% 
   qtm(borders = "red", fill = NULL)
@@ -443,7 +445,7 @@ bern %>%
 Note, when using clipped grid, there are few examples of grid cells with very small area.  
 These could be excluded if no population was found there?
 
-```{r}
+```{r echo=FALSE}
 bern_clip %>% 
   st_drop_geometry() %>% 
   arrange(area) %>% 
