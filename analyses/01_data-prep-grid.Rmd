@@ -23,6 +23,7 @@ options(max.print = "75")
 
 library(pacman)
 p_load(tidyverse, magrittr, scales,  
+       jsonlite, 
        # DT, 
        sf, tmap)
 
@@ -200,6 +201,7 @@ offset_swisscom <-
   ) %>%
   summarise(min_x = min(min_x),
             min_y = min(min_y)) %>% 
+  # needs rounding - transfrom error?
   mutate(min_y = round(min_y)) %>% 
   st_as_sf(coords = c("min_x", "min_y"), 
            crs = 21781,
@@ -213,6 +215,11 @@ tm_shape(offset_bfs) +
     tm_dots(col = "black") +
 tm_shape(offset_swisscom) +
     tm_dots(col = "red")
+```
+
+```{r include=FALSE}
+rm(chansy_grid, chiasso_grid,
+   chansy_grid_sf, chiasso_grid_sf, offset_bfs); gc()
 ```
 
 <!-- ----------------------------------------------------- -->
@@ -258,14 +265,23 @@ bern_clip <- country %>%
          area = st_area(.)) %>%
   relocate(ID1, ID2, area)
 
-bern <- country %>% 
+bern1 <- country %>% 
   filter(st_intersects(geometry, 
                        st_gg21 %>% filter(GMDNR == 351), 
                        sparse = FALSE)) %>%
   mutate(ID2 = row_number()) %>%
   relocate(ID1, ID2)
 
-bern <- country[st_gg21 %>% filter(GMDNR == 351), ]
+bern2 <- country[st_gg21 %>% filter(GMDNR == 351), ] %>%
+    mutate(ID2 = row_number()) %>% 
+    relocate(ID1, ID2)
+
+identical(bern1, bern2)
+anti_join(bern1 %>% st_drop_geometry(), 
+          bern2 %>% st_drop_geometry(), 
+          by = "ID1")
+
+rm(bern1, bern2); gc()
 ```
 
 ### Function with clipping 
@@ -384,6 +400,16 @@ chiasso <- city_grid(5250)
 write_rds(chiasso, "data/grid/chiasso.Rds")
 ```
 
+```{r eval=FALSE, include=FALSE}
+chansy %>% 
+  st_geometry() %>% 
+  qtm(borders = "red", fill = NULL)
+
+chiasso %>% 
+  st_geometry() %>% 
+  qtm(borders = "red", fill = NULL)
+```
+
 ## Example 
 
 Municipality Bern coverage:  
@@ -414,7 +440,7 @@ bern %>%
   qtm(borders = "red", fill = NULL)
 ```
 
-When using clipped grid, there are few examples of grid cells with very small area.  
+Note, when using clipped grid, there are few examples of grid cells with very small area.  
 These could be excluded if no population was found there?
 
 ```{r}
@@ -454,16 +480,28 @@ Price for 24h
 (price_24h <- price * 24)
 ```
 
-Price for 4w  
+Price for 4w hourly    
 
 ```{r}
 (price_4w <- price_24h * 7 * 4)
 ```
 
-Price for year  
+Price for year hourly   
 
 ```{r}
 (price_year <- price_24h * 365)
+```
+
+Price for 4w daily    
+
+```{r}
+(price_4w_d <- price * 7 * 4)
+```
+
+Price for year daily   
+
+```{r}
+(price_year_d <- price * 365)
 ```
 
 ## 5 cities  - hourly
@@ -487,7 +525,7 @@ Number of requests needed
 Price for complete grid  
 
 ```{r}
-(price <- requests * 0.0)1
+(price <- requests * 0.01)
 ```
 
 Price for 24h  
@@ -496,14 +534,26 @@ Price for 24h
 (price_24h <- price * 24)
 ```
 
-Price for 4w  
+Price for 4w hourly    
 
 ```{r}
 (price_4w <- price_24h * 7 * 4)
 ```
 
-Price for year  
+Price for year hourly   
 
 ```{r}
 (price_year <- price_24h * 365)
+```
+
+Price for 4w daily    
+
+```{r}
+(price_4w_d <- price * 7 * 4)
+```
+
+Price for year daily   
+
+```{r}
+(price_year_d <- price * 365)
 ```
