@@ -146,76 +146,58 @@ country <- read_rds("data/grid/country.Rds")
 
 Clipped using swisstopo municipality data.  
 
-Added second city specific ID and area. 
+Added second, city specific ID and area. 
 
-### Zuirich
-
-```{r}
-zurich <- country %>% 
-  st_intersection(st_gg21 %>% filter(GMDNR == 261))  %>%
-  mutate(ID2 = row_number(),
-         area = st_area(.)) %>% 
-  relocate(ID1, ID2, area)
-```
-
-### Geneva
+### Function
 
 ```{r}
-geneva <- country %>% 
-  st_intersection(st_gg21 %>% filter(GMDNR == 6621))  %>%
-  mutate(ID2 = row_number(),
-         area = st_area(.)) %>% 
-  relocate(ID1, ID2, area)
-```
-
-### Basel
-
-```{r}
-basel <- country %>% 
-  st_intersection(st_gg21 %>% filter(GMDNR == 2701))  %>%
-  mutate(ID2 = row_number(),
-         area = st_area(.)) %>% 
-  relocate(ID1, ID2, area)
-```
-
-### Lausanne
-
-```{r}
-lausanne <- country %>% 
-  st_intersection(st_gg21 %>% filter(GMDNR == 5586))  %>%
-  mutate(ID2 = row_number(),
-         area = st_area(.)) %>% 
-  relocate(ID1, ID2, area)
-```
-
-### Bern 
-
-```{r}
-bern <- country %>% 
-  st_intersection(st_gg21 %>% filter(GMDNR == 351))  %>%
-  mutate(ID2 = row_number(),
-         area = st_area(.)) %>% 
-  relocate(ID1, ID2, area)
-```
-
-```{r eval=FALSE, include=FALSE}
-city_grid <- function(GMDNR){
+city_grid <- function(municipality){
   
   city <- country %>% 
-    st_intersection(st_gg21 %>% filter(GMDNR == GMDNR))  %>%
+    st_intersection(st_gg21 %>% 
+                      filter(GMDNR == municipality))  %>%
     mutate(ID2 = row_number(),
            area = st_area(.)) %>% 
     relocate(ID1, ID2, area)
   
   return(city)
 }
+```
 
-start_time <- Sys.time()
+### Zuirich
 
-bern2 <- city_grid(351)
+```{r}
+zurich_clip <- city_grid(261)
+```
 
-end_time <- Sys.time()
-end_time - start_time
+### Geneva
+
+```{r}
+geneva_clip <- city_grid(6621)
+```
+
+### Basel
+
+```{r}
+basel_clip <- city_grid(2701)
+```
+
+### Lausanne
+
+```{r}
+lausanne_clip <- city_grid(5586)
+```
+
+### Bern 
+
+```{r}
+# bern_clip <- country %>% 
+#   st_intersection(st_gg21 %>% filter(GMDNR == 351))  %>%
+#   mutate(ID2 = row_number(),
+#          area = st_area(.)) %>% 
+#   relocate(ID1, ID2, area)
+
+bern_clip <- city_grid(351)
 
 identical(bern, bern2)
 ```
