@@ -94,7 +94,7 @@ st_cities_2 <- st_gg21 %>%
 #   plot()
 ```
 
-## STATPOP
+## STATPOP offset
 
 Could be used to define `offset` for `st_make_grid`
 
@@ -111,7 +111,108 @@ write_rds(statpop_20, "data/BfS/statpop_20.Rds")
 ```{r}
 offset_bfs <- read_rds("data/BfS/statpop_20.Rds") %>% 
   summarise(min_x = min(X_KOORD),
-            min_y = min(Y_KOORD))
+            min_y = min(Y_KOORD)) %>% 
+  st_as_sf(coords = c("min_x", "min_y"), 
+           crs = 21781,
+           remove = FALSE)
+```
+
+## swisscom offset
+
+Using two communities that are furthest away in southerly and westerly directions:  
+
+**Chansy** to define `x`  
+- Postal code `1284`
+- SFOS number	`6611`
+
+```{r}
+st_gg21 %>% 
+  filter(GMDNR %in% c(6611)) %>% 
+  st_geometry() %>% 
+  qtm(borders = "red", fill = NULL)
+```
+
+**Chiasso** to define `y`  
+- Postal code `6830`
+- SFOS number	`5250`
+
+```{r}
+st_gg21 %>% 
+  filter(GMDNR %in% c(5250)) %>% 
+  st_geometry() %>% 
+  qtm(borders = "red", fill = NULL)
+```
+
+Tile definitions were pulled from API using `query_postal_codes_heatmaps_api.py`.  
+
+Points of grid were defined using lower left corner coordinates.  
+
+`WGS84` coordinates were transformed to `LV03`. 
+
+```{r}
+chansy_grid <- fromJSON("data/swisscom/chansy_grid.json")
+chansy_grid <- flatten(chansy_grid$tiles) %>% 
+  as_tibble()
+
+chiasso_grid <- fromJSON("data/swisscom/chiasso_grid.json")
+chiasso_grid <- flatten(chiasso_grid$tiles) %>% 
+  as_tibble()
+
+chansy_grid_sf <- chansy_grid %>% 
+  st_as_sf(coords = c("ll.x", "ll.y"), 
+           crs = 4326,
+           remove = FALSE) %>% 
+  st_transform(21781) %>% 
+  mutate(x = st_coordinates(.)[, 1],
+         y = st_coordinates(.)[, 2])
+
+chiasso_grid_sf <- chiasso_grid %>% 
+  st_as_sf(coords = c("ll.x", "ll.y"), 
+           crs = 4326,
+           remove = FALSE) %>% 
+  st_transform(21781) %>% 
+  mutate(x = st_coordinates(.)[, 1],
+         y = st_coordinates(.)[, 2])
+```
+
+Example of grid  
+
+```{r}
+qtm(chansy_grid_sf)
+# qtm(chiasso_grid_sf)
+```
+
+Coordinates of lower left corner were then obtained by geting minimum values  
+
+```{r}
+offset_swisscom <- 
+  bind_rows(
+    
+  chansy_grid_sf %>% 
+  st_drop_geometry() %>%
+  summarise(min_x = min(x),
+            min_y = min(y)) ,
+
+  chiasso_grid_sf %>% 
+  st_drop_geometry() %>%
+  summarise(min_x = min(x),
+            min_y = min(y)) 
+  ) %>%
+  summarise(min_x = min(min_x),
+            min_y = min(min_y)) %>% 
+  mutate(min_y = round(min_y)) %>% 
+  st_as_sf(coords = c("min_x", "min_y"), 
+           crs = 21781,
+           remove = FALSE)
+```
+
+Note small difference from BfS derived minimums (in black)!  
+
+```{r}
+tm_shape(offset_bfs) +
+    tm_dots(col = "black") +
+tm_shape(offset_swisscom) +
+    tm_dots(col = "red")
 ```
 
 <!-- ----------------------------------------------------- -->
@@ -120,14 +221,14 @@ offset_bfs <- read_rds("data/BfS/statpop_20.Rds") %>%
 
 ## Generate whole country
 
-100 m grid, with lower left corner defined using `STATPOP` cells.  
+100m grid, with lower left corner defined using `STATPOP` cells.  
 
 Also, adding ID for each cell (based on row number).   
 
 ```{r eval=FALSE}
 country <- st_gg21 %>% 
   st_make_grid(cellsize = 100, 
-               offset = c(offset_bfs$min_x, offset_bfs$min_y),
+               offset = c(offset_swisscom$min_x, offset_swisscom$min_y),
                square = TRUE) %>% 
   st_sf() %>%
   st_cast("POLYGON") %>% 
@@ -261,31 +362,25 @@ write_rds(bern_clip, "data/grid/bern_clip.Rds")
 write_rds(bern, "data/grid/bern.Rds")
 ```
 
-### Chansy 
+### Offset 
+
+Using two communities to get min x and y coordinates: *Chansy* & *Chiasso* 
 
 ```{r}
-chansy_clip <- city_grid_clip(6611)
-chansy <- city_grid(6611)
-```
-
-```{r}
+# chansy_clip <- city_grid_clip(6611)
 # st_write(chansy_clip, "data/grid/chansy_clip.gpkg")
+# write_rds(chansy_clip, "data/grid/chansy_clip.Rds")
+
+chansy <- city_grid(6611)
 # st_write(chansy, "data/grid/chansy.gpkg")
-write_rds(chansy_clip, "data/grid/chansy_clip.Rds")
 write_rds(chansy, "data/grid/chansy.Rds")
-```
 
-### Chiasso 
-
-```{r}
-chiasso_clip <- city_grid_clip(6611)
-chiasso <- city_grid(6611)
-```
-
-```{r}
+# chiasso_clip <- city_grid_clip(5250)
 # st_write(chiasso_clip, "data/grid/chiasso_clip.gpkg")
+# write_rds(chiasso_clip, "data/grid/chiasso_clip.Rds")
+
+chiasso <- city_grid(5250)
 # st_write(chiasso, "data/grid/chiasso.gpkg")
-write_rds(chiasso_clip, "data/grid/chiasso_clip.Rds")
 write_rds(chiasso, "data/grid/chiasso.Rds")
 ```
 
@@ -333,7 +428,7 @@ bern_clip %>%
 
 # Area estimates
 
-## Bern 
+## Bern - hourly
 
 Number of tiles for area of Bern  
 
@@ -371,7 +466,7 @@ Price for year
 (price_year <- price_24h * 365)
 ```
 
-## 5 cities 
+## 5 cities  - hourly
 
 Number of tiles for area of Bern  
 
