@@ -1,0 +1,72 @@
+---
+title: "Analyses of swisscom data"
+subtitle: "Grid preparation"
+author: "Radek Panczak"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::robobook:
+    code_folding: show
+    self_contained: true
+    highlight: pygments
+editor_options: 
+  chunk_output_type: console
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "../docs") })
+---
+
+<!-- ----------------------------------------------------- -->
+
+```{r setup, include = FALSE}
+set.seed(12345)
+options(scipen = 999)
+options(max.print = "75")
+
+library(pacman)
+p_load(tidyverse, magrittr, scales,  
+       # DT, 
+       sf, tmap)
+
+tmap_mode("view")
+
+# import::from("sjmisc", "frq")
+```
+
+```{r conflicts, include = FALSE}
+tidyverse::tidyverse_conflicts()
+
+conflicted::conflict_scout()
+```
+
+```{r knit-setup, include = FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+
+knitr::opts_chunk$set(cache = FALSE,
+                      prompt = FALSE,
+                      tidy = FALSE,
+                      comment = NA,
+                      message = FALSE,
+                      warning = FALSE)
+
+knitr::opts_knit$set(width = 75)
+
+mu <- Hmisc::markupSpecs$html
+```
+
+<!-- ----------------------------------------------------- -->
+
+# Source 
+
+Data is from http://mip.swisscom.ch which swisscom describes as: 
+
+> Our legacy web platform based on trips reconstructed from our mobile phone users traveling all over Switzerland
+
+Example data is available for two time periods 
+
+  - `2019-12-09` to `2019-12-29`
+  - `2020-12-07` to `2020-12-27`
+
+They cover Bern station area  
+
+![Area of data availability](mip_bern.png)
+
+
