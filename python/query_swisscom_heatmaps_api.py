@@ -38,9 +38,8 @@ oauth.fetch_token(token_url = TOKEN_URL,
                   client_id = client_id, client_secret = client_secret)
 
 
-# Get all the first MAX_NB_TILES_REQUEST tile ids associated with the postal code of interest
-# Chansy in SW corner of CH
-# Postal code(s)	1284
+# **Chansy** to define `x`
+# Postal code	1284
 # SFOS number	6611
 municipality = 6611
 muni_tiles_json = oauth.get(
@@ -57,6 +56,22 @@ muni_tiles_json["tiles"][1]
 # save grid to json
 with open('data/swisscom/chansy_grid.json', 'w', encoding = 'utf-8') as f:
     json.dump(muni_tiles_json, f, ensure_ascii = False, indent = 4) 
+
+# **Chiasso** to define `y`  
+# Postal code `6830`
+# SFOS number	`5250`
+municipality = 5250
+muni_tiles_json = oauth.get(
+    BASE_URL + "/grids/municipalities/{0}".format(municipality), headers = headers
+).json()
+
+len(muni_tiles_json["tiles"])
+
+# save grid to json
+with open('data/swisscom/chiasso_grid.json', 'w', encoding = 'utf-8') as f:
+    json.dump(muni_tiles_json, f, ensure_ascii = False, indent = 4) 
+    
+# Get all the first MAX_NB_TILES_REQUEST tile ids associated with the municipality  of interest
 
 tile_ids = [t["tileId"] for t in muni_tiles_json["tiles"]][
     :MAX_NB_TILES_REQUEST
