@@ -65,11 +65,28 @@ Tile definitions were pulled from API using `query_swisscom_heatmaps_api.py`.
 Points of grid were defined using lower left corner coordinates. They were also shifted by 50m east and north to better align with grids.    
 
 ```{r}
-grid_3011 <- fromJSON("data/swisscom/grid_3011.json")
-grid_3011 <- flatten(grid_3011$tiles) %>% 
-  as_tibble()
+read_fun <- function(filename) {
+  
+  data <- jsonlite::fromJSON(filename)
+  data <- jsonlite::flatten(data$tiles) %>% 
+    dplyr::as_tibble()
+  
+  data$plz <- gsub("grid_|.json", "", filename)
+  data$plz <- gsub("data/swisscom/", "", data$plz)
+  
+  return( data )
+}
 
-grid_3011_sf <- grid_3011 %>% 
+doFuture::registerDoFuture()
+future::plan("multisession", workers = 8)
+
+grid <- plyr::ldply(.data = fs::dir_ls("data/swisscom/", 
+                                       regexp = "[0-9][.]json$"),
+                    .fun = read_fun,
+                    .id = NULL,
+                    .parallel = TRUE)
+
+grid_sf <- grid %>% 
   st_as_sf(coords = c("ll.x", "ll.y"), 
            crs = 4326,
            remove = TRUE) %>% 
@@ -79,9 +96,9 @@ grid_3011_sf <- grid_3011 %>%
   select(-ur.x, -ur.y)
 
 # shifting by 50m to the centre
-grid_3011_sf_50 <- grid_3011_sf %>% 
+grid_sf_50 <- grid_sf %>% 
   st_drop_geometry() %>% 
-  mutate(x = as.integer(as.integer(x) + 51),
+  mutate(x = as.integer(as.integer(x) + 51), # why on earth 1?
          y = as.integer(as.integer(y) + 50)) %>% 
   st_as_sf(coords = c("x", "y"), 
            crs = 21781,
@@ -89,9 +106,9 @@ grid_3011_sf_50 <- grid_3011_sf %>%
 ```
 
 ```{r eval=FALSE, include=FALSE}
-tm_shape(grid_3011_sf) + 
+tm_shape(grid_sf) + 
   tm_dots(col = "grey50") + 
-  tm_shape(grid_3011_sf_50) + 
+  tm_shape(grid_sf_50) + 
   tm_dots(col = "darkorchid")
 ```
 
@@ -99,11 +116,8 @@ tm_shape(grid_3011_sf) +
 
 ```{r}
 bern_plz <- 
-  # for 3011 no difference for clipped vs not
-  # might be handy for larger area of bern tho
-  read_rds("data/grid/bern_clip.Rds") %>% 
-  # read_rds("data/grid/bern.Rds") %>%
-  st_join(grid_3011_sf_50,
+  read_rds("data/grid/country.Rds") %>% 
+  st_join(grid_sf_50,
           left = FALSE)
 
 write_rds(bern_plz, "data/grid/bern_plz.Rds")
@@ -112,18 +126,17 @@ write_rds(bern_plz, "data/grid/bern_plz.Rds")
 ```{r eval=FALSE, include=FALSE}
 bern_plz_ct <- st_centroid(bern_plz)
 
-tm_shape(grid_3011_sf_50) + 
+tm_shape(grid_sf_50) + 
   tm_dots(col = "darkorchid") +
   tm_shape(bern_plz_ct) + 
   tm_dots(col = "grey50")
 ```
 
-3011 coverage:  
+Study area coverage:  
 
 ```{r echo=FALSE}
 tm_shape(bern_plz) + 
   tm_borders(col = "darkorchid") +
-  tm_shape(grid_3011_sf_50) + 
+  tm_shape(grid_sf_50) + 
   tm_dots(col = "grey50")
 ```
-
