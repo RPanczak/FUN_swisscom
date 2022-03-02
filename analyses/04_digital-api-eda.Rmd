@@ -28,7 +28,7 @@ p_load(tidyverse, magrittr, scales,
 
 tmap_mode("view")
 
-# import::from("sjmisc", "frq")
+import::from("sjmisc", "frq")
 ```
 
 ```{r conflicts, include = FALSE}
@@ -58,14 +58,17 @@ mu <- Hmisc::markupSpecs$html
 
 ## Grid 
 
-Testing on 3011 ftm.  
+Testing on several PLZs of Bern & surroundings.  
 
 ```{r}
 bern_plz <- read_rds("data/grid/bern_plz.Rds") %>% 
-  select(-area, -GMDNR, -GMDNAME, -KTNR, -GEM_TEIL) %>% 
   rename(tile_id = tileId)
 
 bern_plz_ct <- st_centroid(bern_plz)
+```
+
+```{r echo=FALSE}
+frq(bern_plz$plz)
 ```
 
 ```{r eval=FALSE, include=FALSE}
@@ -79,10 +82,10 @@ View(st_drop_geometry(bern_plz))
 #   tm_dots(col = "grey50")
 
 tm_shape(bern_plz) + 
-  tm_borders(col = "darkorchid")
+  tm_fill(col = "plz", alpha = 0.5)
 ```
 
-# Dwell density 
+## Dwell density 
 
 Data is from http://mip.swisscom.ch which swisscom describes as: 
 
@@ -92,20 +95,55 @@ Important note: free data is limited to **2020-01-27** only!
 
 We are using [Heatmaps API](https://digital.swisscom.com/products/heatmaps/info) to retrieve daily and hourly dwell times for one postcode. Code to retrieve data, kindly provided by Yann Steimer from swisscom, is in `example_notebook_SC_heatmaps_API_UNIBE.ipynb`.   
 
-## Daily dwell density
+### Daily dwell density
 
 ```{r}
-data_day <- read_delim("data/swisscom/3011_day.csv", 
-                       delim = ";", escape_double = FALSE, trim_ws = TRUE) %>% 
-  select(tile_id, time, score)
+read_fun <- function(filename) {
+  
+  data <- readr::read_delim(filename, 
+                       delim = ";", escape_double = FALSE, trim_ws = TRUE,
+                       show_col_types = FALSE) %>% 
+    dplyr::select(tile_id, time, score) %>% 
+    dplyr::as_tibble()
+  
+  data$plz <- gsub("_day|.csv", "", filename)
+  data$plz <- gsub("data/swisscom/", "", data$plz)
+  
+  return( data )
+}
+
+doFuture::registerDoFuture()
+future::plan("multisession", workers = 8)
+
+data_day <- plyr::ldply(.data = fs::dir_ls("data/swisscom/", 
+                                       regexp = "[0-9]_day[.]csv$"),
+                    .fun = read_fun,
+                    .id = NULL,
+                    .parallel = TRUE)
 ```
 
-## Hourly dwell density
+### Hourly dwell density
 
 ```{r}
-data_hour <- read_delim("data/swisscom/3011_hour.csv", 
-                        delim = ";", escape_double = FALSE, trim_ws = TRUE) %>% 
-  select(tile_id, time, score)
+read_fun <- function(filename) {
+  
+  data <- readr::read_delim(filename, 
+                       delim = ";", escape_double = FALSE, trim_ws = TRUE,
+                       show_col_types = FALSE) %>% 
+    dplyr::select(tile_id, time, score) %>% 
+    dplyr::as_tibble()
+  
+  data$plz <- gsub("_hour|.csv", "", filename)
+  data$plz <- gsub("data/swisscom/", "", data$plz)
+  
+  return( data )
+}
+
+data_hour <- plyr::ldply(.data = fs::dir_ls("data/swisscom/", 
+                                       regexp = "[0-9]_hour[.]csv$"),
+                    .fun = read_fun,
+                    .id = NULL,
+                    .parallel = TRUE)
 ```
 
 ```{r eval=FALSE, include=FALSE}
@@ -142,8 +180,17 @@ bern_plz_hour <- bern_plz %>%
 ```{r echo=FALSE}
 bern_plz_hour %>% 
   st_drop_geometry() %>% 
-  ggplot(aes(x = time, y = score, group = tile_id, colour = tile_id)) +
+  ggplot(aes(x = time, y = score, group = tile_id, colour = factor(plz))) +
+  geom_line(alpha = 0.66) + 
+  theme_light()
+```
+
+```{r echo=FALSE}
+bern_plz_hour %>% 
+  st_drop_geometry() %>% 
+  ggplot(aes(x = time, y = score, group = tile_id, colour = factor(plz))) +
   geom_line(alpha = 0.5) + 
+  facet_wrap(vars(plz), scales = "free_y") + 
   theme_light()
 ```
 
