@@ -62,7 +62,7 @@ Focusing on test area of Bern city centre.
 
 Tile definitions were pulled from API using `query_swisscom_heatmaps_api.py`.  
 
-Points of grid were defined using lower left corner coordinates. They were also shifted by 50m east and north to better allign with grids.    
+Points of grid were defined using lower left corner coordinates. They were also shifted by 50m east and north to better align with grids.    
 
 ```{r}
 grid_3011 <- fromJSON("data/swisscom/grid_3011.json")
@@ -98,28 +98,30 @@ tm_shape(grid_3011_sf) +
 ## Grid derived with swisscom offset
 
 ```{r}
-bern <- 
+bern_plz <- 
   # for 3011 no difference for clipped vs not
   # might be handy for larger area of bern tho
   read_rds("data/grid/bern_clip.Rds") %>% 
   # read_rds("data/grid/bern.Rds") %>%
   st_join(grid_3011_sf_50,
           left = FALSE)
+
+write_rds(bern_plz, "data/grid/bern_plz.Rds")
 ```
 
 ```{r eval=FALSE, include=FALSE}
-bern_ct <- st_centroid(bern)
+bern_plz_ct <- st_centroid(bern_plz)
 
 tm_shape(grid_3011_sf_50) + 
   tm_dots(col = "darkorchid") +
-  tm_shape(bern_ct) + 
+  tm_shape(bern_plz_ct) + 
   tm_dots(col = "grey50")
 ```
 
 3011 coverage:  
 
-```{r}
-tm_shape(bern) + 
+```{r echo=FALSE}
+tm_shape(bern_plz) + 
   tm_borders(col = "darkorchid") +
   tm_shape(grid_3011_sf_50) + 
   tm_dots(col = "grey50")
