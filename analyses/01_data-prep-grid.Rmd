@@ -95,6 +95,36 @@ st_cities_2 <- st_gg21 %>%
 #   plot()
 ```
 
+## City quartiers
+
+Data from [BfS](https://www.bfs.admin.ch/bfs/de/home/grundlagen/agvch/quartiergrenzen-schweizer-staedte.html).  
+
+```{r eval=FALSE}
+st_qg17 <- st_read("data-raw/BfS/ag-b-00.03-95-qg17/shp/quart17.shp",
+                   as_tibble = TRUE) %>% 
+  st_zm(drop = TRUE, what = "ZM") %>% 
+  st_transform(21781) %>%
+  select(-OBJECTID_1, -Flaeche) %>% 
+  rename(GMDNR = GMDE,
+         QNAME = NAME,
+         QNR = NR) %>% 
+  left_join(st_gg21 %>% 
+              st_drop_geometry() %>% 
+              select(GMDNR, GMDNAME)) %>% 
+  relocate(geometry, .after = last_col())
+
+write_rds(st_qg17, "data/swisstopo/st_qg17.Rds")
+```
+
+```{r echo=FALSE}
+st_qg17 <- read_rds("data/swisstopo/st_qg17.Rds")
+
+st_qg17 %>% 
+  filter(GMDNR %in% c(351)) %>% 
+  st_geometry() %>% 
+  qtm(borders = "red", fill = NULL)
+```
+
 ## STATPOP offset
 
 Could be used to define `offset` for `st_make_grid`
@@ -144,7 +174,7 @@ st_gg21 %>%
   qtm(borders = "red", fill = NULL)
 ```
 
-Tile definitions were pulled from API using `query_postal_codes_heatmaps_api.py`.  
+Tile definitions were pulled from API using `query_swisscom_heatmaps_api.py`.  
 
 Points of grid were defined using lower left corner coordinates.  
 
@@ -164,7 +194,7 @@ chansy_grid_sf <- chansy_grid %>%
          y = st_coordinates(.)[, 2])
 ```
 
-```{r}
+```{r include=FALSE}
 chiasso_grid <- fromJSON("data/swisscom/chiasso_grid.json")
 chiasso_grid <- flatten(chiasso_grid$tiles) %>% 
   as_tibble()
@@ -178,11 +208,16 @@ chiasso_grid_sf <- chiasso_grid %>%
          y = st_coordinates(.)[, 2])
 ```
 
-Example of grid  
+Chansy    
 
 ```{r echo=FALSE}
 qtm(chansy_grid_sf)
-# qtm(chiasso_grid_sf)
+```
+
+Chiasso  
+
+```{r echo=FALSE}
+qtm(chiasso_grid_sf)
 ```
 
 Coordinates of lower left corner were then obtained by getting minimum values  
@@ -191,15 +226,15 @@ Coordinates of lower left corner were then obtained by getting minimum values
 offset_swisscom <- 
   bind_rows(
     
-  chansy_grid_sf %>% 
-  st_drop_geometry() %>%
-  summarise(min_x = min(x),
-            min_y = min(y)) ,
-
-  chiasso_grid_sf %>% 
-  st_drop_geometry() %>%
-  summarise(min_x = min(x),
-            min_y = min(y)) 
+    chansy_grid_sf %>% 
+      st_drop_geometry() %>%
+      summarise(min_x = min(x),
+                min_y = min(y)) ,
+    
+    chiasso_grid_sf %>% 
+      st_drop_geometry() %>%
+      summarise(min_x = min(x),
+                min_y = min(y)) 
   ) %>%
   summarise(min_x = min(min_x),
             min_y = min(min_y)) %>% 
@@ -214,9 +249,9 @@ Note small difference from BfS derived minimums (in black)!
 
 ```{r echo=FALSE}
 tm_shape(offset_bfs) +
-    tm_dots(col = "black") +
-tm_shape(offset_swisscom) +
-    tm_dots(col = "red")
+  tm_dots(col = "black") +
+  tm_shape(offset_swisscom) +
+  tm_dots(col = "red")
 ```
 
 ```{r include=FALSE}
@@ -230,7 +265,7 @@ rm(chansy_grid, chiasso_grid,
 
 ## Generate whole country
 
-100m grid, with lower left corner defined using `STATPOP` cells.  
+100m grid, with lower left corner defined using swisscom derived offset.  
 
 Also, adding ID for each cell (based on row number).   
 
@@ -275,8 +310,8 @@ bern1 <- country %>%
   relocate(ID1, ID2)
 
 bern2 <- country[st_gg21 %>% filter(GMDNR == 351), ] %>%
-    mutate(ID2 = row_number()) %>% 
-    relocate(ID1, ID2)
+  mutate(ID2 = row_number()) %>% 
+  relocate(ID1, ID2)
 
 identical(bern1, bern2)
 anti_join(bern1 %>% st_drop_geometry(), 
@@ -512,10 +547,10 @@ Number of tiles for area of Bern
 
 ```{r}
 (tiles <- nrow(zurich) +
-  nrow(geneva) +
-  nrow(basel) +
-  nrow(lausanne) +
-  nrow(bern))
+   nrow(geneva) +
+   nrow(basel) +
+   nrow(lausanne) +
+   nrow(bern))
 ```
 
 Number of requests needed  
