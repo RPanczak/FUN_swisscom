@@ -23,7 +23,7 @@ options(max.print = "75")
 
 library(pacman)
 p_load(tidyverse, magrittr, scales,  
-       # DT, 
+       lubridate, 
        sf, tmap)
 
 tmap_mode("view")
@@ -54,31 +54,107 @@ mu <- Hmisc::markupSpecs$html
 
 <!-- ----------------------------------------------------- -->
 
-# Ancillary data
+# Data 
 
-## Municipality boundaries 
+## Grid 
+
+Testing on 3011 ftm.  
 
 ```{r}
-st_gg21 <- read_rds("data/swisstopo/st_gg21.Rds")
+bern_plz <- read_rds("data/grid/bern_plz.Rds") %>% 
+  select(-area, -GMDNR, -GMDNAME, -KTNR, -GEM_TEIL) %>% 
+  rename(tile_id = tileId)
+
+bern_plz_ct <- st_centroid(bern_plz)
+```
+
+```{r eval=FALSE, include=FALSE}
+View(st_drop_geometry(bern_plz))
+```
+
+```{r echo=FALSE}
+# tm_shape(bern_plz) + 
+#   tm_borders(col = "darkorchid") +
+#   tm_shape(bern_plz_ct) + 
+#   tm_dots(col = "grey50")
+
+tm_shape(bern_plz) + 
+  tm_borders(col = "darkorchid")
+```
+
+# Dwell density 
+
+Data is from http://mip.swisscom.ch which swisscom describes as: 
+
+> Our new API platform offering 3 endpoints focusing on *density*, *dwell times* and *origin destination*  
+
+Important note: free data is limited to **2020-01-27** only!  
+
+We are using [Heatmaps API](https://digital.swisscom.com/products/heatmaps/info) to retrieve daily and hourly dwell times for one postcode. Code to retrieve data, kindly provided by Yann Steimer from swisscom, is in `example_notebook_SC_heatmaps_API_UNIBE.ipynb`.   
+
+## Daily dwell density
+
+```{r}
+data_day <- read_delim("data/swisscom/3011_day.csv", 
+                       delim = ";", escape_double = FALSE, trim_ws = TRUE) %>% 
+  select(tile_id, time, score)
+```
+
+## Hourly dwell density
+
+```{r}
+data_hour <- read_delim("data/swisscom/3011_hour.csv", 
+                        delim = ";", escape_double = FALSE, trim_ws = TRUE) %>% 
+  select(tile_id, time, score)
+```
+
+```{r eval=FALSE, include=FALSE}
+View(data_day)
+View(data_hour)
 ```
 
 <!-- ----------------------------------------------------- -->
 
-# Source 
+# EDA
 
-Data is from http://mip.swisscom.ch which swisscom describes as: 
+## Daily 
 
-> Our new API platform offering 3 endpoints focusing on *density*, *dwell times* and *origin destination*
+```{r}
+bern_plz_day <- bern_plz %>% 
+  left_join(data_day %>% select(-time))
+```
 
-Free data is limited to **2020-01-27** only!  
+```{r echo=FALSE}
+bern_plz_day %>% 
+  tm_shape() + 
+  tm_polygons(col = "score", alpha = 0.5, palette = "-plasma",
+              n = 7, style = "jenks",
+              border.col = "white", border.alpha = 0.5)
+```
 
-## Heatmaps 
+## Hourly 
 
-Daily dwell demographics
-Get estimated demographics data per tile for a period of one day.
+```{r}
+bern_plz_hour <- bern_plz %>% 
+  left_join(data_hour)
+```
 
-Daily dwell density
-Get the estimated density of people per tile for a period of one day.
+```{r echo=FALSE}
+bern_plz_hour %>% 
+  st_drop_geometry() %>% 
+  ggplot(aes(x = time, y = score, group = tile_id, colour = tile_id)) +
+  geom_line(alpha = 0.5) + 
+  theme_light()
+```
 
-Daily unique counts
-Get the estimated number of unique individuals per tile for a period of one day.
+```{r echo=FALSE}
+bern_plz_hour %>% 
+  filter(hour(time) %in% c(0, 12)) %>% 
+  mutate(daytime = ifelse(hour(time) == 0, "Midnight", "Noon")) %>% 
+  tm_shape() + 
+  tm_polygons(col = "score", alpha = 0.5, palette = "-plasma",
+              n = 7, style = "jenks",
+              border.col = "white", border.alpha = 0.5) +
+  tm_facets(by = "daytime")
+```
+
