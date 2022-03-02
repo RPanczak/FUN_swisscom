@@ -34,8 +34,7 @@ client_secret = lines[4].rstrip()
 # Fetch an access token
 client = BackendApplicationClient(client_id = client_id)
 oauth = OAuth2Session(client = client)
-oauth.fetch_token(token_url = TOKEN_URL, 
-                  client_id = client_id, client_secret = client_secret)
+oauth.fetch_token(token_url = TOKEN_URL, client_id = client_id, client_secret = client_secret)
 
 
 # **Chansy** to define `x`
@@ -69,6 +68,41 @@ len(muni_tiles_json["tiles"])
 
 # save grid to json
 with open('data/swisscom/chiasso_grid.json', 'w', encoding = 'utf-8') as f:
+    json.dump(muni_tiles_json, f, ensure_ascii = False, indent = 4) 
+
+# **Bern PLZs** to capture city centre
+# SFOS number	 351
+
+# Postal code	3011
+plz = 3011
+muni_tiles_json = oauth.get(
+    BASE_URL + "/grids/postal-code-areas/{0}".format(plz), headers = headers
+).json()
+
+type(muni_tiles_json)
+type(muni_tiles_json["tiles"])
+len(muni_tiles_json["tiles"])
+
+muni_tiles_json.items()
+muni_tiles_json["tiles"][1]
+
+# save grid to json
+with open('data/swisscom/grid_3011.json', 'w', encoding = 'utf-8') as f:
+    json.dump(muni_tiles_json, f, ensure_ascii = False, indent = 4) 
+
+# Postal code
+plz = 3012
+muni_tiles_json = oauth.get(
+    BASE_URL + "/grids/postal-code-areas/{0}".format(plz), headers = headers
+).json()
+
+len(muni_tiles_json["tiles"])
+
+muni_tiles_json.items()
+muni_tiles_json["tiles"][1]
+
+# save grid to json
+with open('data/swisscom/grid_3012.json', 'w', encoding = 'utf-8') as f:
     json.dump(muni_tiles_json, f, ensure_ascii = False, indent = 4) 
     
 # Get all the first MAX_NB_TILES_REQUEST tile ids associated with the municipality  of interest

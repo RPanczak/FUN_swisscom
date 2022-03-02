@@ -1,6 +1,6 @@
 ---
 title: "Analyses of swisscom data"
-subtitle: "Grid eda"
+subtitle: "Grid extras"
 author: "Radek Panczak"
 date: "`r Sys.Date()`"
 output:
@@ -24,7 +24,6 @@ options(max.print = "75")
 library(pacman)
 p_load(tidyverse, magrittr, scales,  
        jsonlite, 
-       # DT, 
        sf, tmap)
 
 tmap_mode("view")
@@ -54,4 +53,75 @@ mu <- Hmisc::markupSpecs$html
 ```
 
 <!-- ----------------------------------------------------- -->
+
+# Data 
+
+Focusing on test area of Bern city centre.  
+
+## Swisscom grid coordinates
+
+Tile definitions were pulled from API using `query_swisscom_heatmaps_api.py`.  
+
+Points of grid were defined using lower left corner coordinates. They were also shifted by 50m east and north to better allign with grids.    
+
+```{r}
+grid_3011 <- fromJSON("data/swisscom/grid_3011.json")
+grid_3011 <- flatten(grid_3011$tiles) %>% 
+  as_tibble()
+
+grid_3011_sf <- grid_3011 %>% 
+  st_as_sf(coords = c("ll.x", "ll.y"), 
+           crs = 4326,
+           remove = TRUE) %>% 
+  st_transform(21781) %>% 
+  mutate(x = st_coordinates(.)[, 1],
+         y = st_coordinates(.)[, 2]) %>% 
+  select(-ur.x, -ur.y)
+
+# shifting by 50m to the centre
+grid_3011_sf_50 <- grid_3011_sf %>% 
+  st_drop_geometry() %>% 
+  mutate(x = as.integer(as.integer(x) + 51),
+         y = as.integer(as.integer(y) + 50)) %>% 
+  st_as_sf(coords = c("x", "y"), 
+           crs = 21781,
+           remove = FALSE) 
+```
+
+```{r eval=FALSE, include=FALSE}
+tm_shape(grid_3011_sf) + 
+  tm_dots(col = "grey50") + 
+  tm_shape(grid_3011_sf_50) + 
+  tm_dots(col = "darkorchid")
+```
+
+## Grid derived with swisscom offset
+
+```{r}
+bern <- 
+  # for 3011 no difference for clipped vs not
+  # might be handy for larger area of bern tho
+  read_rds("data/grid/bern_clip.Rds") %>% 
+  # read_rds("data/grid/bern.Rds") %>%
+  st_join(grid_3011_sf_50,
+          left = FALSE)
+```
+
+```{r eval=FALSE, include=FALSE}
+bern_ct <- st_centroid(bern)
+
+tm_shape(grid_3011_sf_50) + 
+  tm_dots(col = "darkorchid") +
+  tm_shape(bern_ct) + 
+  tm_dots(col = "grey50")
+```
+
+3011 coverage:  
+
+```{r}
+tm_shape(bern) + 
+  tm_borders(col = "darkorchid") +
+  tm_shape(grid_3011_sf_50) + 
+  tm_dots(col = "grey50")
+```
 
