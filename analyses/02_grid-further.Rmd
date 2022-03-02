@@ -28,7 +28,7 @@ p_load(tidyverse, magrittr, scales,
 
 tmap_mode("view")
 
-# import::from("sjmisc", "frq")
+import::from("sjmisc", "frq")
 ```
 
 ```{r conflicts, include = FALSE}
@@ -54,15 +54,9 @@ mu <- Hmisc::markupSpecs$html
 
 <!-- ----------------------------------------------------- -->
 
-# Data 
-
-Focusing on test area of Bern city centre.  
-
-## Swisscom grid coordinates
+# Swisscom grid coordinates & IDs
 
 Tile definitions were pulled from API using `query_swisscom_heatmaps_api.py`.  
-
-Points of grid were defined using lower left corner coordinates. They were also shifted by 50m east and north to better align with grids.    
 
 ```{r}
 read_fun <- function(filename) {
@@ -85,7 +79,17 @@ grid <- plyr::ldply(.data = fs::dir_ls("data/swisscom/",
                     .fun = read_fun,
                     .id = NULL,
                     .parallel = TRUE)
+```
 
+Focusing on test area of Bern city centre, including postal codes:  
+
+```{r echo=FALSE}
+frq(grid$plz)
+```
+
+Points of grid were defined using lower left corner coordinates. They were also shifted by 50m east and north to better align with grids.    
+
+```{r}
 grid_sf <- grid %>% 
   st_as_sf(coords = c("ll.x", "ll.y"), 
            crs = 4326,
@@ -112,7 +116,11 @@ tm_shape(grid_sf) +
   tm_dots(col = "darkorchid")
 ```
 
-## Grid derived with swisscom offset
+<!-- ----------------------------------------------------- -->
+
+# Grid derived with swisscom offset
+
+swisscom points were linked to country grid derived in file `01.Rmd` providing access to crucial `tile ID` variable needed to link to the Heatmap API outputs.  
 
 ```{r}
 bern_plz <- 
