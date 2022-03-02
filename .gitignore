@@ -42,6 +42,7 @@ vignettes/*.pdf
 data-raw/
 secrets/swisscom.txt
 admin/
+python-closed/
 
 # too big
 data/grid/country.Rds
