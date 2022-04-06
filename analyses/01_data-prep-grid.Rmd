@@ -493,49 +493,56 @@ bern_clip %>%
 
 ## Bern - hourly
 
-Number of tiles for area of Bern  
+- Number of tiles for area of Bern  
 
 ```{r}
 (tiles <- nrow(bern))
 ```
 
-Number of requests needed  
+
+- Number of requests needed  
 
 ```{r}
 (requests <- ceiling(tiles / 100))
 ```
 
-Price for complete grid  
+
+- Price for complete grid  
 
 ```{r}
 (price <- requests * 0.01)
 ```
 
-Price for 24h  
+
+- Price for 24h  
 
 ```{r}
 (price_24h <- price * 24)
 ```
 
-Price for 4w hourly    
+
+- Price for 4w hourly    
 
 ```{r}
 (price_4w <- price_24h * 7 * 4)
 ```
 
-Price for year hourly   
+
+- Price for year hourly   
 
 ```{r}
 (price_year <- price_24h * 365)
 ```
 
-Price for 4w daily    
+
+- Price for 4w daily    
 
 ```{r}
 (price_4w_d <- price * 7 * 4)
 ```
 
-Price for year daily   
+
+- Price for year daily   
 
 ```{r}
 (price_year_d <- price * 365)
@@ -543,7 +550,7 @@ Price for year daily
 
 ## 5 cities  - hourly
 
-Number of tiles for area of Bern  
+- Number of tiles for area of Bern  
 
 ```{r}
 (tiles <- nrow(zurich) +
@@ -553,43 +560,50 @@ Number of tiles for area of Bern
    nrow(bern))
 ```
 
-Number of requests needed  
+
+- Number of requests needed  
 
 ```{r}
 (requests <- ceiling(tiles / 100))
 ```
 
-Price for complete grid  
+
+- Price for complete grid  
 
 ```{r}
 (price <- requests * 0.01)
 ```
 
-Price for 24h  
+
+- Price for 24h  
 
 ```{r}
 (price_24h <- price * 24)
 ```
 
-Price for 4w hourly    
+
+- Price for 4w hourly    
 
 ```{r}
 (price_4w <- price_24h * 7 * 4)
 ```
 
-Price for year hourly   
+
+- Price for year hourly   
 
 ```{r}
 (price_year <- price_24h * 365)
 ```
 
-Price for 4w daily    
+
+- Price for 4w daily    
 
 ```{r}
 (price_4w_d <- price * 7 * 4)
 ```
 
-Price for year daily   
+
+- Price for year daily   
 
 ```{r}
 (price_year_d <- price * 365)
