@@ -62,6 +62,9 @@ Testing on several PLZs of Bern & surroundings.
 
 ```{r}
 bern_plz <- read_rds("data/grid/bern_plz.Rds") %>% 
+  # duplicates are out for visualizations! 
+  # fix if PLZ is needed more precisely!
+  distinct(tileId, .keep_all = TRUE) %>% 
   rename(tile_id = tileId)
 
 bern_plz_ct <- st_centroid(bern_plz)
@@ -101,25 +104,27 @@ We are using [Heatmaps API](https://digital.swisscom.com/products/heatmaps/info)
 read_fun <- function(filename) {
   
   data <- readr::read_delim(filename, 
-                       delim = ";", escape_double = FALSE, trim_ws = TRUE,
-                       show_col_types = FALSE) %>% 
+                            delim = ";", escape_double = FALSE, trim_ws = TRUE,
+                            show_col_types = FALSE) %>% 
     dplyr::select(tile_id, time, score) %>% 
     dplyr::as_tibble()
   
   data$plz <- gsub("_day|.csv", "", filename)
   data$plz <- gsub("data/swisscom/", "", data$plz)
   
-  return( data )
+  return(data)
 }
 
 doFuture::registerDoFuture()
 future::plan("multisession", workers = 8)
 
 data_day <- plyr::ldply(.data = fs::dir_ls("data/swisscom/", 
-                                       regexp = "[0-9]_day[.]csv$"),
-                    .fun = read_fun,
-                    .id = NULL,
-                    .parallel = TRUE)
+                                           regexp = "[0-9]_day[.]csv$"),
+                        .fun = read_fun,
+                        .id = NULL,
+                        .parallel = TRUE) %>% 
+  as_tibble() %>% 
+  distinct(tile_id, time, .keep_all = TRUE)
 ```
 
 ### Hourly dwell density
@@ -128,22 +133,24 @@ data_day <- plyr::ldply(.data = fs::dir_ls("data/swisscom/",
 read_fun <- function(filename) {
   
   data <- readr::read_delim(filename, 
-                       delim = ";", escape_double = FALSE, trim_ws = TRUE,
-                       show_col_types = FALSE) %>% 
+                            delim = ";", escape_double = FALSE, trim_ws = TRUE,
+                            show_col_types = FALSE) %>% 
     dplyr::select(tile_id, time, score) %>% 
     dplyr::as_tibble()
   
   data$plz <- gsub("_hour|.csv", "", filename)
   data$plz <- gsub("data/swisscom/", "", data$plz)
   
-  return( data )
+  return(data)
 }
 
 data_hour <- plyr::ldply(.data = fs::dir_ls("data/swisscom/", 
-                                       regexp = "[0-9]_hour[.]csv$"),
-                    .fun = read_fun,
-                    .id = NULL,
-                    .parallel = TRUE)
+                                            regexp = "[0-9]_hour[.]csv$"),
+                         .fun = read_fun,
+                         .id = NULL,
+                         .parallel = TRUE) %>% 
+  as_tibble() %>% 
+  distinct(tile_id, time, .keep_all = TRUE)
 ```
 
 ```{r eval=FALSE, include=FALSE}

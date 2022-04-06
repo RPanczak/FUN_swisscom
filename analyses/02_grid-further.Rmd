@@ -78,7 +78,9 @@ grid <- plyr::ldply(.data = fs::dir_ls("data/swisscom/",
                                        regexp = "[0-9][.]json$"),
                     .fun = read_fun,
                     .id = NULL,
-                    .parallel = TRUE)
+                    .parallel = TRUE) %>% 
+  as_tibble() %>% 
+  distinct()
 ```
 
 Focusing on test area of Bern city centre, including postal codes:  
@@ -122,13 +124,17 @@ tm_shape(grid_sf) +
 
 swisscom points were linked to country grid derived in file `01.Rmd` providing access to crucial `tile ID` variable needed to link to the Heatmap API outputs.  
 
-```{r}
+```{r eval=FALSE}
 bern_plz <- 
   read_rds("data/grid/country.Rds") %>% 
   st_join(grid_sf_50,
           left = FALSE)
 
 write_rds(bern_plz, "data/grid/bern_plz.Rds")
+```
+
+```{r include=FALSE}
+bern_plz <- read_rds("data/grid/bern_plz.Rds")
 ```
 
 ```{r eval=FALSE, include=FALSE}
@@ -140,7 +146,7 @@ tm_shape(grid_sf_50) +
   tm_dots(col = "grey50")
 ```
 
-Study area coverage:  
+## Study area coverage  
 
 ```{r echo=FALSE}
 tm_shape(bern_plz) + 
@@ -148,3 +154,23 @@ tm_shape(bern_plz) +
   tm_shape(grid_sf_50) + 
   tm_dots(col = "grey50")
 ```
+
+## Duplicate cells
+
+There are some cells in the grid that are duplicated because they overlap two (or more?) PLZs and were returned twice. 
+
+```{r echo=FALSE}
+frq(duplicated(bern_plz$tileId))
+```
+
+Example:  
+
+```{r echo=FALSE}
+tm_shape(bern_plz %>% filter(plz %in% c("3084", "3098"))) + 
+  tm_fill(col = "plz", alpha = 0.5) + 
+  tm_shape(bern_plz %>% filter(tileId == 31718585)) + 
+  tm_borders(col = "red")
+```
+
+The do have unique ID so can easily be excluded in order to create correct visualizations (see [#8](https://github.com/RPanczak/FUN_swisscom/issues/8)). However analyses that would be based on PLZs, particularly aggregation of data would have to determine correct assignment of grid cells to PLZs. Perhaps by using (pop weighted?) centroid or sth similar?  
+
