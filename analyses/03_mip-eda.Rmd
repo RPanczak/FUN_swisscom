@@ -65,7 +65,7 @@ Example data is available for two time periods
 
 They cover Bern station area  
 
-![Area of data availability](mip_bern.png)
+![Area of data availability](../docs/mip_bern.png)
 
 <!-- ----------------------------------------------------- -->
 
