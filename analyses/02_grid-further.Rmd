@@ -170,7 +170,7 @@ tm_shape(bern_plz %>% filter(plz %in% c("3084", "3098"))) +
   tm_borders(col = "red")
 ```
 
-The do have unique ID so can easily be excluded in order to create correct visualizations (see [#8](https://github.com/RPanczak/FUN_swisscom/issues/8)). However analyses that would be based on PLZs, particularly aggregation of data would have to determine correct assignment of grid cells to PLZs. Perhaps by using (pop weighted?) centroid or sth similar?  
+They do have unique ID so can easily be excluded in order to create correct visualizations (see [issue #8](https://github.com/RPanczak/FUN_swisscom/issues/8)). However analyses that would be based on PLZs, particularly aggregation of data would have to determine correct assignment of grid cells to PLZs. Perhaps by using (pop weighted?) centroid or sth similar?  
 
 <!-- ----------------------------------------------------- -->
 
