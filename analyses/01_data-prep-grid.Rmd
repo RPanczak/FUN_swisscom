@@ -49,8 +49,6 @@ knitr::opts_chunk$set(cache = FALSE,
                       warning = FALSE)
 
 knitr::opts_knit$set(width = 75)
-
-mu <- Hmisc::markupSpecs$html
 ```
 
 <!-- ----------------------------------------------------- -->
@@ -607,4 +605,12 @@ bern_clip %>%
 
 ```{r}
 (price_year_d <- price * 365)
+```
+
+<!-- ----------------------------------------------------- -->
+
+# Environment
+
+```{r echo=FALSE, results='asis'}
+report::report(sessionInfo())
 ```
