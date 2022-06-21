@@ -261,7 +261,8 @@ rm(chansy_grid, chiasso_grid,
 
 ## Commuter flows 
 
-2018 commuter flows from mobility microcensus.  
+2018 [commuter flows](https://www.bfs.admin.ch/asset/de/ts-x-11.04.04.05-2018) from mobility microcensus.  
+Testing only on areas of canton Bern.  
 
 ```{r}
 commuters <- read_delim("data-raw/BfS/ts-x-11.04.04.05-2018.csv", 
@@ -273,11 +274,74 @@ commuters <- read_delim("data-raw/BfS/ts-x-11.04.04.05-2018.csv",
                                          GEO_COMM_WORK = col_integer(), 
                                          VALUE = col_integer()), 
                         trim_ws = TRUE) %>% 
-  filter(PERSPECTIVE == "R") %>% 
-  select(-PERSPECTIVE, -REF_YEAR) %>% 
-  janitor::clean_names()
+  janitor::clean_names() %>% 
+  filter(perspective == "R") %>% 
+  select(-perspective, -ref_year) %>% 
+  filter(geo_cant_resid == 2) %>% 
+  select(-geo_cant_resid) %>% 
+  arrange(geo_comm_resid, desc(value))
 ```
 
+There are cross cantonal flows still here!  
+
+```{r echo=FALSE}
+frq(commuters, geo_cant_work)
+```
+
+Aggregating by community of origin:  
+
+
+```{r}
+geo_comm_resid_agg <- 
+  
+  left_join(
+    
+    commuters %>% 
+      group_by(geo_comm_resid) %>% 
+      summarise(workers_all = sum(value)) %>% 
+      ungroup() %>% 
+      select(geo_comm_resid, workers_all),
+    
+    commuters %>% 
+      filter(geo_comm_resid == geo_comm_work) %>% 
+      rename(workers_stay = value) %>% 
+      ungroup() %>% 
+      select(geo_comm_resid, workers_stay)
+    
+  ) %>% 
+  
+  left_join(
+    
+    commuters %>% 
+      filter(geo_comm_resid != geo_comm_work) %>% 
+      group_by(geo_comm_resid) %>% 
+      summarise(workers_leave = sum(value)) %>% 
+      ungroup() %>% 
+      select(geo_comm_resid, workers_leave) 
+  ) %>% 
+  mutate(percent_leave = (workers_leave / workers_all) * 100)
+```
+
+```{r include=FALSE}
+gem18 <- st_read("../../projects/ISPM_geo/data-raw/swisstopo/swissBOUNDARIES3D/BOUNDARIES_2018/DATEN/SHAPEFILE_LV95_LN02/swissBOUNDARIES3D_1_3_TLM_HOHEITSGEBIET.shp") %>% 
+  st_zm(drop = TRUE) %>% 
+  filter(ICC == "CH") %>% 
+  filter(BFS_NUMMER < 9000) %>% 
+  filter(OBJEKTART == "Gemeindegebiet") %>% 
+  select(BFS_NUMMER, NAME, GEM_TEIL) %>% 
+  rename(geo_comm_resid = BFS_NUMMER,
+         geo_comm_name = NAME) %>% 
+  arrange(geo_comm_resid, GEM_TEIL)
+
+gem18 <- inner_join(gem18, geo_comm_resid_agg)
+
+# anti_join(geo_comm_resid_agg, gem18)
+```
+
+```{r echo=FALSE}
+gem18 %>% 
+  qtm(borders = "white", text = "geo_comm_name", fill = "percent_leave")
+```
 
 <!-- ----------------------------------------------------- -->
 
