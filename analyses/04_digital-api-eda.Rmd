@@ -68,6 +68,8 @@ bern_plz <- read_rds("data/grid/bern_plz.Rds") %>%
 bern_plz_ct <- st_centroid(bern_plz)
 ```
 
+Tiles per PLZ:  
+
 ```{r echo=FALSE}
 frq(bern_plz$plz)
 ```
@@ -92,7 +94,7 @@ Data is from http://mip.swisscom.ch which swisscom describes as:
 
 > Our new API platform offering 3 endpoints focusing on *density*, *dwell times* and *origin destination*  
 
-Important note: free data is limited to **2020-01-27** only!  
+*Important note:* free data is limited to **2020-01-27** only!  
 
 We are using [Heatmaps API](https://digital.swisscom.com/products/heatmaps/info) to retrieve daily and hourly dwell times for one postcode. Code to retrieve data, kindly provided by Yann Steimer from swisscom, is in `example_notebook_SC_heatmaps_API_UNIBE.ipynb`.   
 
@@ -182,6 +184,8 @@ bern_plz_hour <- bern_plz %>%
   left_join(data_hour)
 ```
 
+Cell lines coloured by postcode:  
+
 ```{r echo=FALSE}
 bern_plz_hour %>% 
   st_drop_geometry() %>% 
@@ -198,6 +202,18 @@ bern_plz_hour %>%
   facet_wrap(vars(plz), scales = "free_y") + 
   theme_light()
 ```
+
+Averages per postcode:  
+
+```{r echo=FALSE}
+bern_plz_hour %>% 
+  st_drop_geometry() %>% 
+  ggplot(aes(x = time, y = score, colour = factor(plz))) +
+  geom_smooth(se = FALSE) + 
+  theme_light()
+```
+
+Spatial distribution comparing two time points:  
 
 ```{r echo=FALSE}
 bern_plz_hour %>% 
