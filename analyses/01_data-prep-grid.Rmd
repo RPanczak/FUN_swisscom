@@ -259,6 +259,26 @@ rm(chansy_grid, chiasso_grid,
    chansy_grid_sf, chiasso_grid_sf, offset_bfs); gc()
 ```
 
+## Commuter flows 
+
+2018 commuter flows from mobility microcensus.  
+
+```{r}
+commuters <- read_delim("data-raw/BfS/ts-x-11.04.04.05-2018.csv", 
+                        delim = ";", escape_double = FALSE, 
+                        col_types = cols(REF_YEAR = col_integer(),
+                                         GEO_CANT_RESID = col_integer(),
+                                         GEO_COMM_RESID = col_integer(), 
+                                         GEO_CANT_WORK = col_integer(),
+                                         GEO_COMM_WORK = col_integer(), 
+                                         VALUE = col_integer()), 
+                        trim_ws = TRUE) %>% 
+  filter(PERSPECTIVE == "R") %>% 
+  select(-PERSPECTIVE, -REF_YEAR) %>% 
+  janitor::clean_names()
+```
+
+
 <!-- ----------------------------------------------------- -->
 
 # Grid
