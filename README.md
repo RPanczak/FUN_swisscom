@@ -1,6 +1,6 @@
 # FUN_swisscom
 
-:switzerland: Swisscom Mobility Insights - eda of publicly available data
+:switzerland: Swisscom Mobility Insights :iphone: - eda of publicly available data
 
 ![image](https://user-images.githubusercontent.com/31648642/162013725-f8a6adfb-0c82-47be-b73a-925b0b8c638b.png)
 
