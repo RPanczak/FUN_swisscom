@@ -114,6 +114,8 @@ st_qg17 <- st_read("data-raw/BfS/ag-b-00.03-95-qg17/shp/quart17.shp",
 write_rds(st_qg17, "data/swisstopo/st_qg17.Rds")
 ```
 
+Example of Bern  
+
 ```{r echo=FALSE}
 st_qg17 <- read_rds("data/swisstopo/st_qg17.Rds")
 
