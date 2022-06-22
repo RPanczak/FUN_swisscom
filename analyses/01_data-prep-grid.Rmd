@@ -24,7 +24,7 @@ options(max.print = "75")
 library(pacman)
 p_load(tidyverse, magrittr, scales,  
        jsonlite, 
-       # DT, 
+       DT,
        sf, tmap)
 
 tmap_mode("view")
@@ -261,6 +261,8 @@ rm(chansy_grid, chiasso_grid,
 
 ## Commuter flows 
 
+### Data 
+
 2018 [commuter flows](https://www.bfs.admin.ch/asset/de/ts-x-11.04.04.05-2018) from mobility microcensus.  
 Testing only on areas of canton Bern.  
 
@@ -288,8 +290,7 @@ There are cross cantonal flows still here!
 frq(commuters, geo_cant_work)
 ```
 
-Aggregating by community of origin:  
-
+### Aggregating by community of origin
 
 ```{r}
 geo_comm_resid_agg <- 
@@ -322,6 +323,8 @@ geo_comm_resid_agg <-
   mutate(percent_leave = (workers_leave / workers_all) * 100)
 ```
 
+### Map of areas with high outflows 
+
 ```{r include=FALSE}
 gem18 <- st_read("../../projects/ISPM_geo/data-raw/swisstopo/swissBOUNDARIES3D/BOUNDARIES_2018/DATEN/SHAPEFILE_LV95_LN02/swissBOUNDARIES3D_1_3_TLM_HOHEITSGEBIET.shp") %>% 
   st_zm(drop = TRUE) %>% 
@@ -350,6 +353,32 @@ tm_shape(gem18) +
   tm_shape(plz_22_06) +
   tm_borders("blue", lwd = .5) +
   tm_text("PLZ", col = "blue")
+```
+
+### Bernese suburbs examples {.tabset}
+
+#### Frauenkappelen 
+
+```{r}
+commuters %>% 
+  filter(geo_comm_resid == 663) %>% 
+  datatable()
+```
+
+#### Bremgarten 
+
+```{r}
+commuters %>% 
+  filter(geo_comm_resid == 353) %>% 
+  datatable()
+```
+
+#### Stettlen 
+
+```{r}
+commuters %>% 
+  filter(geo_comm_resid == 358) %>% 
+  datatable()
 ```
 
 <!-- ----------------------------------------------------- -->
