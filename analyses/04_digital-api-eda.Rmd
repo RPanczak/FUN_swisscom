@@ -184,25 +184,6 @@ bern_plz_hour <- bern_plz %>%
   left_join(data_hour)
 ```
 
-Cell lines coloured by postcode:  
-
-```{r echo=FALSE}
-bern_plz_hour %>% 
-  st_drop_geometry() %>% 
-  ggplot(aes(x = time, y = score, group = tile_id, colour = factor(plz))) +
-  geom_line(alpha = 0.66) + 
-  theme_light()
-```
-
-```{r echo=FALSE}
-bern_plz_hour %>% 
-  st_drop_geometry() %>% 
-  ggplot(aes(x = time, y = score, group = tile_id, colour = factor(plz))) +
-  geom_line(alpha = 0.5) + 
-  facet_wrap(vars(plz), scales = "free_y") + 
-  theme_light()
-```
-
 Averages per postcode:  
 
 ```{r echo=FALSE}
@@ -213,12 +194,23 @@ bern_plz_hour %>%
   theme_light()
 ```
 
-Spatial distribution comparing two time points:  
+Detailed, individual cell lines by postcode:  
 
 ```{r echo=FALSE}
 bern_plz_hour %>% 
-  filter(hour(time) %in% c(0, 12)) %>% 
-  mutate(daytime = ifelse(hour(time) == 0, "Midnight", "Noon")) %>% 
+  st_drop_geometry() %>% 
+  ggplot(aes(x = time, y = score, group = tile_id, colour = factor(plz))) +
+  geom_line(alpha = 0.5) + 
+  facet_wrap(vars(plz), scales = "free_y") + 
+  theme_light()
+```
+
+Spatial distribution comparing 4AM and 3PM:  
+
+```{r echo=FALSE}
+bern_plz_hour %>% 
+  filter(hour(time) %in% c(4, 15)) %>% 
+  mutate(daytime = ifelse(hour(time) == 4, "Night", "Day")) %>% 
   tm_shape() + 
   tm_polygons(col = "score", alpha = 0.5, palette = "-plasma",
               n = 7, style = "jenks",
