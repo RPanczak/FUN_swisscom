@@ -29,7 +29,7 @@ p_load(tidyverse, magrittr, scales,
 
 tmap_mode("view")
 
-# import::from("sjmisc", "frq")
+import::from("sjmisc", "frq")
 ```
 
 ```{r conflicts, include = FALSE}
