@@ -359,7 +359,7 @@ tm_shape(gem18) +
 
 #### Frauenkappelen 
 
-```{r}
+```{r echo=FALSE}
 commuters %>% 
   filter(geo_comm_resid == 663) %>% 
   datatable()
@@ -367,7 +367,7 @@ commuters %>%
 
 #### Bremgarten 
 
-```{r}
+```{r echo=FALSE}
 commuters %>% 
   filter(geo_comm_resid == 353) %>% 
   datatable()
@@ -375,7 +375,7 @@ commuters %>%
 
 #### Stettlen 
 
-```{r}
+```{r echo=FALSE}
 commuters %>% 
   filter(geo_comm_resid == 358) %>% 
   datatable()
