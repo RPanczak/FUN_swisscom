@@ -101,7 +101,7 @@ We are using [Heatmaps API](https://digital.swisscom.com/products/heatmaps/info)
 ### Daily dwell density
 
 ```{r}
-read_fun <- function(filename) {
+read_day <- function(filename) {
   
   data <- readr::read_delim(filename, 
                             delim = ";", escape_double = FALSE, trim_ws = TRUE,
@@ -120,7 +120,7 @@ future::plan("multisession", workers = 8)
 
 data_day <- plyr::ldply(.data = fs::dir_ls("data/swisscom/", 
                                            regexp = "[0-9]_day[.]csv$"),
-                        .fun = read_fun,
+                        .fun = read_day,
                         .id = NULL,
                         .parallel = TRUE) %>% 
   as_tibble() %>% 
@@ -130,7 +130,7 @@ data_day <- plyr::ldply(.data = fs::dir_ls("data/swisscom/",
 ### Hourly dwell density
 
 ```{r}
-read_fun <- function(filename) {
+read_hour <- function(filename) {
   
   data <- readr::read_delim(filename, 
                             delim = ";", escape_double = FALSE, trim_ws = TRUE,
@@ -146,7 +146,7 @@ read_fun <- function(filename) {
 
 data_hour <- plyr::ldply(.data = fs::dir_ls("data/swisscom/", 
                                             regexp = "[0-9]_hour[.]csv$"),
-                         .fun = read_fun,
+                         .fun = read_hour,
                          .id = NULL,
                          .parallel = TRUE) %>% 
   as_tibble() %>% 

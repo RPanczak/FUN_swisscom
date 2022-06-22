@@ -57,7 +57,7 @@ knitr::opts_knit$set(width = 75)
 Tile definitions were pulled from API using `query_swisscom_heatmaps_api.py`.  
 
 ```{r}
-read_fun <- function(filename) {
+read_tiles <- function(filename) {
   
   data <- jsonlite::fromJSON(filename)
   data <- jsonlite::flatten(data$tiles) %>% 
@@ -74,17 +74,17 @@ future::plan("multisession", workers = 8)
 
 grid <- plyr::ldply(.data = fs::dir_ls("data/swisscom/", 
                                        regexp = "[0-9][.]json$"),
-                    .fun = read_fun,
+                    .fun = read_tiles,
                     .id = NULL,
                     .parallel = TRUE) %>% 
   as_tibble() %>% 
   distinct()
 ```
 
-Focusing on test area of Bern city centre, including postal codes:  
+Focusing on test area of Bern city centre and selected suburbs, including postal codes:  
 
 ```{r echo=FALSE}
-frq(grid$plz)
+frq(grid, plz)
 ```
 
 Points of grid were defined using lower left corner coordinates. They were also shifted by 50m east and north to better align with grids.    
