@@ -325,6 +325,7 @@ geo_comm_resid_agg <-
 ```{r include=FALSE}
 gem18 <- st_read("../../projects/ISPM_geo/data-raw/swisstopo/swissBOUNDARIES3D/BOUNDARIES_2018/DATEN/SHAPEFILE_LV95_LN02/swissBOUNDARIES3D_1_3_TLM_HOHEITSGEBIET.shp") %>% 
   st_zm(drop = TRUE) %>% 
+  st_transform(2056) %>% 
   filter(ICC == "CH") %>% 
   filter(BFS_NUMMER < 9000) %>% 
   filter(OBJEKTART == "Gemeindegebiet") %>% 
@@ -336,11 +337,19 @@ gem18 <- st_read("../../projects/ISPM_geo/data-raw/swisstopo/swissBOUNDARIES3D/B
 gem18 <- inner_join(gem18, geo_comm_resid_agg)
 
 # anti_join(geo_comm_resid_agg, gem18)
+
+plz_22_06 <- read_rds("../../projects/ISPM_geo/data/PLZ/plz_22_06.Rds") %>% 
+  st_transform(2056) %>% 
+  st_filter(gem18)
 ```
 
 ```{r echo=FALSE}
-gem18 %>% 
-  qtm(borders = "white", text = "geo_comm_name", fill = "percent_leave")
+tm_shape(gem18) +
+  tm_fill(col = "percent_leave", border.col = "grey40") +
+  tm_text("geo_comm_name") + 
+  tm_shape(plz_22_06) +
+  tm_borders("blue", lwd = .5) +
+  tm_text("PLZ", col = "blue")
 ```
 
 <!-- ----------------------------------------------------- -->
