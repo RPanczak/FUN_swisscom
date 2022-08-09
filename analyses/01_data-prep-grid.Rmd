@@ -93,6 +93,14 @@ st_cities_2 <- st_gg21 %>%
 #   plot()
 ```
 
+Example of Bern  
+
+```{r echo=FALSE}
+st_gg21 %>% 
+  filter(GMDNR %in% c(351)) %>% 
+  qtm(borders = "red", fill = NULL)
+```
+
 ## City quartiers
 
 Data from [BfS](https://www.bfs.admin.ch/bfs/de/home/grundlagen/agvch/quartiergrenzen-schweizer-staedte.html).  
