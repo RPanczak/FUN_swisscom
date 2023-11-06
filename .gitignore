@@ -47,3 +47,6 @@ python-closed/
 # too big
 data/grid/country.Rds
 data/BfS/statpop_20.Rds
+
+# mac
+.DS_Store
